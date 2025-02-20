@@ -9,7 +9,11 @@ import (
 )
 
 func main() {
-	fmt.Println(`
+	// ANSI escape codes for colors
+	red := "\033[1;31m"
+	reset := "\033[0m"
+
+	fmt.Println(red + `
 **                                               **          
 /**                                              /**          
 /**  ******  **    **  *****  *******   ******  ******  ***** 
@@ -17,9 +21,9 @@ func main() {
 /**/**   /**//** /** /******* /**  /**/**   /**  /**  /*******
 /**/**   /** //****  /**////  /**  /**/**   /**  /**  /**//// 
 ***//******   //**   //****** ***  /**//******   //** //******
-///  //////     //     ////// ///   //  //////     //   //////`)
+///  //////     //     ////// ///   //  //////     //   //////` + reset)
 
-	fmt.Printf("\nStarting server...\n")
+	fmt.Printf("\n\tStarting server, listening at port :8000...\n\n")
 
 	r := api.RegisterRoutes()
 	err := http.ListenAndServe(":8000", r)
