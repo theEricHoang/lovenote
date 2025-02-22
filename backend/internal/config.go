@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	JWTSecretKey string
+	DatabaseURL  string
 }
 
 func LoadConfig() Config {
@@ -19,6 +20,7 @@ func LoadConfig() Config {
 
 	config := Config{
 		JWTSecretKey: getEnv("JWT_SECRET_KEY", ""),
+		DatabaseURL:  getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/lovenote?sslmode=disable"),
 	}
 
 	if config.JWTSecretKey == "" {
