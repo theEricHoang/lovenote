@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/theEricHoang/lovenote/backend/internal/api/users"
 )
 
 // define routes here
@@ -16,6 +17,9 @@ func RegisterRoutes() chi.Router {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello world"))
 	})
+
+	// users routes
+	r.Post("/users", users.RegisterUser)
 
 	return r
 }
