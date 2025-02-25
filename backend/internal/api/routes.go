@@ -19,7 +19,8 @@ func RegisterRoutes() chi.Router {
 	})
 
 	// users routes
-	r.Post("/users", users.RegisterUser)
+	r.Post("/users", users.RegisterHandler)
+	r.Post("/users/login", users.LoginHandler)
 
 	return r
 }

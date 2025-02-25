@@ -12,3 +12,13 @@ func CreateUser(username, email, profilePicture, passwordHash string) (uint, err
 	err := db.DB.QueryRow(context.Background(), query, username, email, profilePicture, passwordHash).Scan(&userId)
 	return userId, err
 }
+
+func GetUserByUsername(username string) (*User, error) {
+	var user User
+	query := "SELECT id, username, email, profile_picture, password_hash FROM users WHERE username = $1"
+	err := db.DB.QueryRow(context.Background(), query, username).Scan(&user.Id, &user.Username, &user.Email, &user.ProfilePicture, &user.PasswordHash)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
