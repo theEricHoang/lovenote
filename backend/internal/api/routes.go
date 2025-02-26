@@ -21,6 +21,7 @@ func RegisterRoutes() chi.Router {
 	// users routes
 	r.Post("/users", users.RegisterHandler)
 	r.Post("/users/login", users.LoginHandler)
+	r.Get("/users/{id}", users.GetUserHandler)
 
 	return r
 }

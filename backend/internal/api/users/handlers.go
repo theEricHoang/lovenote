@@ -3,7 +3,9 @@ package users
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/theEricHoang/lovenote/backend/internal/api/auth"
 )
 
@@ -119,10 +121,52 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		http.Error(w, "Error encoding user to JSON", http.StatusInternalServerError)
 		return
 	}
+}
+
+func GetUserHandler(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+
+	userId64, err := strconv.ParseUint(idParam, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid user id", http.StatusBadRequest)
+		return
+	}
+	userId := uint(userId64)
+
+	user, err := GetUserById(userId)
+	if err != nil {
+		http.Error(w, "User does not exist", http.StatusNotFound)
+		return
+	}
+
+	res := struct {
+		Id             uint   `json:"id"`
+		Username       string `json:"username"`
+		ProfilePicture string `json:"profile_picture"`
+		Bio            string `json:"bio"`
+	}{
+		Id:             user.Id,
+		Username:       user.Username,
+		ProfilePicture: user.ProfilePicture,
+		Bio:            user.Bio,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		http.Error(w, "Error encoding user to JSON", http.StatusInternalServerError)
+	}
+}
+
+func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+
 }

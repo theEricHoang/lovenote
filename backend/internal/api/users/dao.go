@@ -15,8 +15,19 @@ func CreateUser(username, email, profilePicture, passwordHash string) (uint, err
 
 func GetUserByUsername(username string) (*User, error) {
 	var user User
-	query := "SELECT id, username, email, profile_picture, password_hash FROM users WHERE username = $1"
-	err := db.DB.QueryRow(context.Background(), query, username).Scan(&user.Id, &user.Username, &user.Email, &user.ProfilePicture, &user.PasswordHash)
+	query := "SELECT id, username, email, profile_picture, bio, password_hash FROM users WHERE username = $1"
+	err := db.DB.QueryRow(context.Background(), query, username).Scan(&user.Id, &user.Username, &user.Email, &user.ProfilePicture, &user.Bio, &user.PasswordHash)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func GetUserById(id uint) (*User, error) {
+	var user User
+	query := "SELECT id, username, email, profile_picture, bio, password_hash FROM users WHERE id = $1"
+	row := db.DB.QueryRow(context.Background(), query, id)
+	err := row.Scan(&user.Id, &user.Username, &user.Email, &user.ProfilePicture, &user.Bio, &user.PasswordHash)
 	if err != nil {
 		return nil, err
 	}
