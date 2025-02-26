@@ -7,11 +7,20 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/theEricHoang/lovenote/backend/internal/api/auth"
+	"github.com/theEricHoang/lovenote/backend/internal/api/middleware"
 )
 
 const DefaultProfilePicture = "https://img.freepik.com/free-vector/gradient-heart_78370-478.jpg"
 
-func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+type UserHandler struct {
+	UserDAO *UserDAO
+}
+
+func NewUserHandler(userDAO *UserDAO) *UserHandler {
+	return &UserHandler{UserDAO: userDAO}
+}
+
+func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Username       string `json:"username"`
 		Email          string `json:"email"`
@@ -37,7 +46,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := CreateUser(req.Username, req.Email, profilePicture, hashedPassword)
+	userId, err := h.UserDAO.CreateUser(r.Context(), req.Username, req.Email, profilePicture, hashedPassword)
 	if err != nil {
 		http.Error(w, "Error creating user in database", http.StatusInternalServerError)
 		return
@@ -74,7 +83,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -86,7 +95,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := GetUserByUsername(req.Username)
+	user, err := h.UserDAO.GetUserByUsername(r.Context(), req.Username)
 	if err != nil {
 		http.Error(w, "User does not exist", http.StatusUnauthorized)
 		return
@@ -128,7 +137,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 
 	userId64, err := strconv.ParseUint(idParam, 10, 32)
@@ -138,7 +147,7 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	userId := uint(userId64)
 
-	user, err := GetUserById(userId)
+	user, err := h.UserDAO.GetUserById(r.Context(), userId)
 	if err != nil {
 		http.Error(w, "User does not exist", http.StatusNotFound)
 		return
@@ -163,10 +172,32 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
+	var req struct {
+		Username       *string `json:"username,omitempty"`
+		ProfilePicture *string `json:"profile_picture,omitempty"`
+		Bio            *string `json:"bio,omitempty"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err = h.UserDAO.UpdateUser(r.Context(), userId, req)
+	if err != nil {
+		http.Error(w, "Error updating user", http.StatusInternalServerError)
+		return
+	}
 }
 
-func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 
 }

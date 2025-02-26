@@ -2,27 +2,29 @@ package db
 
 import (
 	"context"
-	"log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	config "github.com/theEricHoang/lovenote/backend/internal"
 )
 
-var DB *pgxpool.Pool
+type Database struct {
+	Pool *pgxpool.Pool
+}
 
-func InitDB() {
+func NewDatabase() (*Database, error) {
 	dsn := config.LoadConfig().DatabaseURL
 	ctx := context.Background()
 
-	var err error
-	DB, err = pgxpool.New(ctx, dsn)
+	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
+		return nil, err
 	}
+
+	return &Database{Pool: pool}, nil
 }
 
-func CloseDB() {
-	if DB != nil {
-		DB.Close()
+func (db *Database) Close() {
+	if db.Pool != nil {
+		db.Pool.Close()
 	}
 }

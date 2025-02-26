@@ -9,7 +9,7 @@ import (
 )
 
 // define routes here
-func RegisterRoutes() chi.Router {
+func RegisterRoutes(userHandler *users.UserHandler) chi.Router {
 	r := chi.NewRouter()
 	r.Use(chimiddleware.StripSlashes)
 	r.Use(chimiddleware.Logger)
@@ -19,9 +19,11 @@ func RegisterRoutes() chi.Router {
 	})
 
 	// users routes
-	r.Post("/users", users.RegisterHandler)
-	r.Post("/users/login", users.LoginHandler)
-	r.Get("/users/{id}", users.GetUserHandler)
+	r.Route("/users", func(r chi.Router) {
+		r.Post("/", userHandler.RegisterHandler)
+		r.Post("/login", userHandler.LoginHandler)
+		r.Get("/{id}", userHandler.GetUserHandler)
+	})
 
 	return r
 }

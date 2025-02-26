@@ -9,12 +9,20 @@ import (
 	"syscall"
 
 	"github.com/theEricHoang/lovenote/backend/internal/api"
+	"github.com/theEricHoang/lovenote/backend/internal/api/users"
 	db "github.com/theEricHoang/lovenote/backend/internal/pkg"
 )
 
 func main() {
-	db.InitDB()
-	defer db.CloseDB()
+	database, err := db.NewDatabase()
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer database.Close()
+
+	userDAO := users.NewUserDAO(database)
+
+	userHandler := users.NewUserHandler(userDAO)
 
 	// shutdown signals
 	c := make(chan os.Signal, 1)
@@ -24,7 +32,7 @@ func main() {
 	go func() {
 		<-c // wait for shutdown signal to be received
 		fmt.Println("\nShutting down gracefully...")
-		db.CloseDB()
+		database.Close()
 		os.Exit(0)
 	}()
 
@@ -44,8 +52,8 @@ func main() {
 
 	fmt.Printf("\n\tStarting server, listening at port :8000...\n\n")
 
-	r := api.RegisterRoutes()
-	err := http.ListenAndServe(":8000", r)
+	r := api.RegisterRoutes(userHandler)
+	err = http.ListenAndServe(":8000", r)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
