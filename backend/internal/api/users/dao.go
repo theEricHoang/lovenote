@@ -77,3 +77,9 @@ func (dao *UserDAO) UpdateUser(ctx context.Context, userId uint, data struct {
 	_, err := dao.DB.Pool.Exec(ctx, query, args...)
 	return err
 }
+
+func (dao *UserDAO) DeleteUser(ctx context.Context, userId uint) error {
+	query := "DELETE FROM users WHERE id = $1"
+	_, err := dao.DB.Pool.Exec(ctx, query, userId)
+	return err
+}

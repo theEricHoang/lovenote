@@ -196,8 +196,27 @@ func (h *UserHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Error updating user", http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(map[string]string{"message": "User updated successfully!"})
+	if err != nil {
+		http.Error(w, "Error writing response", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
+	err := h.UserDAO.DeleteUser(r.Context(), userId)
+	if err != nil {
+		http.Error(w, "Error deleting user", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

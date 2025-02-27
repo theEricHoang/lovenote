@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/theEricHoang/lovenote/backend/internal/api/middleware"
 	"github.com/theEricHoang/lovenote/backend/internal/api/users"
 )
 
@@ -23,6 +24,8 @@ func RegisterRoutes(userHandler *users.UserHandler) chi.Router {
 		r.Post("/", userHandler.RegisterHandler)
 		r.Post("/login", userHandler.LoginHandler)
 		r.Get("/{id}", userHandler.GetUserHandler)
+		r.With(middleware.AuthenticateMiddleware).Patch("/me", userHandler.UpdateUserHandler)
+		r.With(middleware.AuthenticateMiddleware).Delete("/me", userHandler.DeleteUserHandler)
 	})
 
 	return r
