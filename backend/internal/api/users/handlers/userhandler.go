@@ -170,6 +170,7 @@ func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		http.Error(w, "Error encoding user to JSON", http.StatusInternalServerError)
+		return
 	}
 }
 
