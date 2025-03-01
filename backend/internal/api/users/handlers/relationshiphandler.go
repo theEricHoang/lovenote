@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/theEricHoang/lovenote/backend/internal/api/middleware"
 	"github.com/theEricHoang/lovenote/backend/internal/api/users/dao"
 )
 
@@ -76,7 +77,11 @@ func (h *RelationshipHandler) GetRelationshipHandler(w http.ResponseWriter, r *h
 }
 
 func (h *RelationshipHandler) UpdateRelationshipHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: make it so that only relationship members can update the relationship
+	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	idParam := chi.URLParam(r, "id")
 
@@ -86,6 +91,16 @@ func (h *RelationshipHandler) UpdateRelationshipHandler(w http.ResponseWriter, r
 		return
 	}
 	id := uint(id64)
+
+	userInRelationship, err := h.RelationshipDAO.UserInRelationship(r.Context(), id, userId)
+	if err != nil {
+		http.Error(w, "Error checking if current user is in the requested relationship", http.StatusInternalServerError)
+		return
+	}
+	if !userInRelationship {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	var req struct {
 		Name    *string `json:"name,omitempty"`
@@ -113,7 +128,11 @@ func (h *RelationshipHandler) UpdateRelationshipHandler(w http.ResponseWriter, r
 }
 
 func (h *RelationshipHandler) DeleteRelationshipHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: only accessible when you're the last person in the relationship
+	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	idParam := chi.URLParam(r, "id")
 
@@ -123,6 +142,17 @@ func (h *RelationshipHandler) DeleteRelationshipHandler(w http.ResponseWriter, r
 		return
 	}
 	id := uint(id64)
+
+	// check to see if user is the only person in relationship
+	isOnly, err := h.RelationshipDAO.IsUserOnlyMember(r.Context(), userId, id)
+	if err != nil {
+		http.Error(w, "Error checking permissions", http.StatusInternalServerError)
+		return
+	}
+	if !isOnly {
+		http.Error(w, "Unauthorized, relationships can only be deleted if only one person belongs to them", http.StatusUnauthorized)
+		return
+	}
 
 	err = h.RelationshipDAO.DeleteRelationship(r.Context(), id)
 	if err != nil {

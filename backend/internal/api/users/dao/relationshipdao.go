@@ -85,3 +85,27 @@ func (dao *RelationshipDAO) DeleteRelationship(ctx context.Context, id uint) err
 	_, err := dao.DB.Pool.Exec(ctx, query, id)
 	return err
 }
+
+func (dao *RelationshipDAO) UserInRelationship(ctx context.Context, relationshipId, userId uint) (bool, error) {
+	var exists bool
+	query := `SELECT EXISTS (
+		SELECT 1 FROM relationship_members WHERE relationship_id = $1 AND user_id = $2
+	)`
+
+	err := dao.DB.Pool.QueryRow(ctx, query, relationshipId, userId).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+func (dao *RelationshipDAO) IsUserOnlyMember(ctx context.Context, userID, relationshipID uint) (bool, error) {
+	var isOnly bool
+	query := `SELECT COUNT(*) = 1 FROM relationship_members WHERE relationship_id = $1 AND user_id = $2`
+
+	err := dao.DB.Pool.QueryRow(ctx, query, relationshipID, userID).Scan(&isOnly)
+	if err != nil {
+		return false, err
+	}
+	return isOnly, nil
+}
