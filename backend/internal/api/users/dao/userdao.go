@@ -72,7 +72,7 @@ func (dao *UserDAO) UpdateUser(ctx context.Context, userId uint, data struct {
 		return nil
 	}
 
-	query := fmt.Sprintf("UPDATE USERS SET %s WHERE id = $%d", strings.Join(updates, ", "), argPos)
+	query := fmt.Sprintf("UPDATE users SET %s WHERE id = $%d", strings.Join(updates, ", "), argPos)
 	args = append(args, userId)
 
 	_, err := dao.DB.Pool.Exec(ctx, query, args...)
