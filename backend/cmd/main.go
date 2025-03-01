@@ -9,7 +9,8 @@ import (
 	"syscall"
 
 	"github.com/theEricHoang/lovenote/backend/internal/api"
-	"github.com/theEricHoang/lovenote/backend/internal/api/users"
+	"github.com/theEricHoang/lovenote/backend/internal/api/users/dao"
+	"github.com/theEricHoang/lovenote/backend/internal/api/users/handlers"
 	db "github.com/theEricHoang/lovenote/backend/internal/pkg"
 )
 
@@ -20,9 +21,9 @@ func main() {
 	}
 	defer database.Close()
 
-	userDAO := users.NewUserDAO(database)
+	userDAO := dao.NewUserDAO(database)
 
-	userHandler := users.NewUserHandler(userDAO)
+	userHandler := handlers.NewUserHandler(userDAO)
 
 	// shutdown signals
 	c := make(chan os.Signal, 1)

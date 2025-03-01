@@ -1,4 +1,4 @@
-package users
+package handlers
 
 import (
 	"encoding/json"
@@ -8,15 +8,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/theEricHoang/lovenote/backend/internal/api/auth"
 	"github.com/theEricHoang/lovenote/backend/internal/api/middleware"
+	"github.com/theEricHoang/lovenote/backend/internal/api/users/dao"
 )
 
 const DefaultProfilePicture = "https://img.freepik.com/free-vector/gradient-heart_78370-478.jpg"
 
 type UserHandler struct {
-	UserDAO *UserDAO
+	UserDAO *dao.UserDAO
 }
 
-func NewUserHandler(userDAO *UserDAO) *UserHandler {
+func NewUserHandler(userDAO *dao.UserDAO) *UserHandler {
 	return &UserHandler{UserDAO: userDAO}
 }
 

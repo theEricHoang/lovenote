@@ -6,11 +6,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/theEricHoang/lovenote/backend/internal/api/middleware"
-	"github.com/theEricHoang/lovenote/backend/internal/api/users"
+	"github.com/theEricHoang/lovenote/backend/internal/api/users/handlers"
 )
 
 // define routes here
-func RegisterRoutes(userHandler *users.UserHandler) chi.Router {
+func RegisterRoutes(userHandler *handlers.UserHandler) chi.Router {
 	r := chi.NewRouter()
 	r.Use(chimiddleware.StripSlashes)
 	r.Use(chimiddleware.Logger)

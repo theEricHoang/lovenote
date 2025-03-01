@@ -1,10 +1,11 @@
-package users
+package dao
 
 import (
 	"context"
 	"fmt"
 	"strings"
 
+	"github.com/theEricHoang/lovenote/backend/internal/api/users/models"
 	db "github.com/theEricHoang/lovenote/backend/internal/pkg"
 )
 
@@ -23,8 +24,8 @@ func (dao *UserDAO) CreateUser(ctx context.Context, username, email, profilePict
 	return userId, err
 }
 
-func (dao *UserDAO) GetUserByUsername(ctx context.Context, username string) (*User, error) {
-	var user User
+func (dao *UserDAO) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
+	var user models.User
 	query := "SELECT id, username, email, profile_picture, bio, password_hash FROM users WHERE username = $1"
 	err := dao.DB.Pool.QueryRow(ctx, query, username).Scan(&user.Id, &user.Username, &user.Email, &user.ProfilePicture, &user.Bio, &user.PasswordHash)
 	if err != nil {
@@ -33,8 +34,8 @@ func (dao *UserDAO) GetUserByUsername(ctx context.Context, username string) (*Us
 	return &user, nil
 }
 
-func (dao *UserDAO) GetUserById(ctx context.Context, id uint) (*User, error) {
-	var user User
+func (dao *UserDAO) GetUserById(ctx context.Context, id uint) (*models.User, error) {
+	var user models.User
 	query := "SELECT id, username, email, profile_picture, bio, password_hash FROM users WHERE id = $1"
 	row := dao.DB.Pool.QueryRow(ctx, query, id)
 	err := row.Scan(&user.Id, &user.Username, &user.Email, &user.ProfilePicture, &user.Bio, &user.PasswordHash)
