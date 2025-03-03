@@ -14,8 +14,8 @@ type RelationshipDAO struct {
 	DB *db.Database
 }
 
-func NewRelationshipDAO(database *db.Database) *UserDAO {
-	return &UserDAO{DB: database}
+func NewRelationshipDAO(database *db.Database) *RelationshipDAO {
+	return &RelationshipDAO{DB: database}
 }
 
 func (dao *RelationshipDAO) CreateRelationship(ctx context.Context, name, picture string) (*models.Relationship, error) {

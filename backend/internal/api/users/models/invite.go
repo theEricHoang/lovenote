@@ -6,7 +6,7 @@ type Invite struct {
 	Id           uint         `json:"id"`
 	Relationship Relationship `json:"relationship"`
 	Inviter      User         `json:"inviter"`
-	InviteeId    uint         `json:"invitee_id"`
+	Invitee      User         `json:"invitee"`
 	Body         string       `json:"body"`
 }
 
