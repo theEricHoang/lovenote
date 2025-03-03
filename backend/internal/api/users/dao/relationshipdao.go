@@ -109,3 +109,12 @@ func (dao *RelationshipDAO) IsUserOnlyMember(ctx context.Context, userID, relati
 	}
 	return isOnly, nil
 }
+
+func (dao *RelationshipDAO) AddUserToRelationship(ctx context.Context, userID, relationshipID uint) error {
+	query := `INSERT INTO relationship_members (relationship_id, user_id)
+		VALUES ($1, $2)
+		ON CONFLICT DO NOTHING`
+
+	_, err := dao.DB.Pool.Exec(ctx, query, relationshipID, userID)
+	return err
+}

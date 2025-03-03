@@ -21,6 +21,13 @@ func NewRelationshipHandler(relationshipDAO *dao.RelationshipDAO) *RelationshipH
 }
 
 func (h *RelationshipHandler) CreateRelationshipHandler(w http.ResponseWriter, r *http.Request) {
+	// get current user to make them the first member of the new relationship
+	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	var req struct {
 		Name    string `json:"name"`
 		Picture string `json:"picture"`
@@ -43,11 +50,18 @@ func (h *RelationshipHandler) CreateRelationshipHandler(w http.ResponseWriter, r
 		return
 	}
 
+	// add current user to new relationship
+	err = h.RelationshipDAO.AddUserToRelationship(r.Context(), userId, relationship.Id)
+	if err != nil {
+		http.Error(w, "Error adding user to new relationship", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	err = json.NewEncoder(w).Encode(relationship)
 	if err != nil {
-		http.Error(w, "Error encoding new user to JSON", http.StatusInternalServerError)
+		http.Error(w, "Error encoding new relationship to JSON", http.StatusInternalServerError)
 		return
 	}
 }

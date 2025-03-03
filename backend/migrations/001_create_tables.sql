@@ -34,3 +34,11 @@ create table relationship_notes (
     note_id int references notes(id) on delete cascade,
     primary key (relationship_id, note_id)
 );
+
+create table invites (
+    id serial primary key,
+    relationship_id int not null references relationships(id) on delete cascade,
+    inviter_id int not null references users(id) on delete cascade,
+    invitee_id int not null references users(id) on delete cascade,
+    body text not null default 'be mine <3'
+);
