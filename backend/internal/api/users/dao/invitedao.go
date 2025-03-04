@@ -59,6 +59,17 @@ func (dao *InviteDAO) CreateInvite(ctx context.Context, relationshipId, inviterI
 	return &invite, nil
 }
 
+func (dao *InviteDAO) GetInviteById(ctx context.Context, inviteId uint) (*models.Invite, error) {
+	var invite models.Invite
+	query := "SELECT id, relationship_id, inviter_id, invitee_id, body FROM invites WHERE id = $1"
+	row := dao.DB.Pool.QueryRow(ctx, query, inviteId)
+	err := row.Scan(&invite.Id, &invite.Relationship.Id, &invite.Inviter.Id, &invite.Invitee.Id, &invite.Body)
+	if err != nil {
+		return nil, err
+	}
+	return &invite, nil
+}
+
 func (dao *InviteDAO) DeleteInvite(ctx context.Context, inviteId uint) error {
 	query := "DELETE FROM invites WHERE id = $1"
 	_, err := dao.DB.Pool.Exec(ctx, query, inviteId)

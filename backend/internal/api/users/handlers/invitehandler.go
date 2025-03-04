@@ -83,9 +83,57 @@ func (h *InviteHandler) InviteUser(w http.ResponseWriter, r *http.Request) {
 
 func (h *InviteHandler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	// get current user
-	// check if they are invitee
+	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// get invite id from url
+	inviteIdParam := chi.URLParam(r, "id")
+	inviteId64, err := strconv.ParseUint(inviteIdParam, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid relationship id", http.StatusBadRequest)
+		return
+	}
+	inviteId := uint(inviteId64)
+
+	// confirm if current user is invitee
+	invite, err := h.InviteDAO.GetInviteById(r.Context(), inviteId)
+	if err != nil {
+		http.Error(w, "Error checking if user is invitee", http.StatusInternalServerError)
+		return
+	}
+	if userId != invite.Invitee.Id {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	// add them to the relationship
+	err = h.RelationshipDAO.AddUserToRelationship(r.Context(), userId, invite.Relationship.Id)
+	if err != nil {
+		http.Error(w, "Error adding user to relationship", http.StatusInternalServerError)
+		return
+	}
+
 	// delete invite
+	err = h.InviteDAO.DeleteInvite(r.Context(), inviteId)
+	if err != nil {
+		http.Error(w, "Error deleting invite", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	response := map[string]string{
+		"message":         "User added to relationship",
+		"relationship_id": strconv.FormatUint(uint64(invite.Relationship.Id), 10),
+	}
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, "error writing response to json", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *InviteHandler) DeleteInvite(w http.ResponseWriter, r *http.Request) {
