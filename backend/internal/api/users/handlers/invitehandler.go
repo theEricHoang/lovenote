@@ -138,6 +138,38 @@ func (h *InviteHandler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 
 func (h *InviteHandler) DeleteInvite(w http.ResponseWriter, r *http.Request) {
 	// get current user
-	// check if inviter or invitee. if not, then unauthorized
+	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// get invite id from url
+	inviteIdParam := chi.URLParam(r, "id")
+	inviteId64, err := strconv.ParseUint(inviteIdParam, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid relationship id", http.StatusBadRequest)
+		return
+	}
+	inviteId := uint(inviteId64)
+
+	// confirm if current user is invitee or invitee
+	invite, err := h.InviteDAO.GetInviteById(r.Context(), inviteId)
+	if err != nil {
+		http.Error(w, "Error checking if user is invitee", http.StatusInternalServerError)
+		return
+	}
+	if userId != invite.Invitee.Id || userId != invite.Inviter.Id {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	// delete invite
+	err = h.InviteDAO.DeleteInvite(r.Context(), inviteId)
+	if err != nil {
+		http.Error(w, "Error deleting invite", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -10,7 +10,7 @@ import (
 )
 
 // define routes here
-func RegisterRoutes(userHandler *handlers.UserHandler) chi.Router {
+func RegisterRoutes(userHandler *handlers.UserHandler, relationshipHandler *handlers.RelationshipHandler, inviteHandler *handlers.InviteHandler) chi.Router {
 	r := chi.NewRouter()
 	r.Use(chimiddleware.StripSlashes)
 	r.Use(chimiddleware.Logger)
@@ -20,12 +20,26 @@ func RegisterRoutes(userHandler *handlers.UserHandler) chi.Router {
 	})
 
 	// users routes
-	r.Route("/users", func(r chi.Router) {
+	r.Route("/api/users", func(r chi.Router) {
 		r.Post("/", userHandler.RegisterHandler)
 		r.Post("/login", userHandler.LoginHandler)
 		r.Get("/{id}", userHandler.GetUserHandler)
 		r.With(middleware.AuthenticateMiddleware).Patch("/me", userHandler.UpdateUserHandler)
 		r.With(middleware.AuthenticateMiddleware).Delete("/me", userHandler.DeleteUserHandler)
+	})
+
+	r.Route("/api/relationships", func(r chi.Router) {
+		r.With(middleware.AuthenticateMiddleware).Post("/", relationshipHandler.CreateRelationshipHandler)
+		r.Get("/{id}", relationshipHandler.GetRelationshipHandler)
+		r.With(middleware.AuthenticateMiddleware).Patch("/{id}", relationshipHandler.UpdateRelationshipHandler)
+		r.With(middleware.AuthenticateMiddleware).Delete("/{id}", relationshipHandler.DeleteRelationshipHandler)
+
+		r.With(middleware.AuthenticateMiddleware).Post("/{id}/invite", inviteHandler.InviteUser)
+	})
+
+	r.Route("/api/invites", func(r chi.Router) {
+		r.With(middleware.AuthenticateMiddleware).Post("/{id}", inviteHandler.AcceptInvite)
+		r.With(middleware.AuthenticateMiddleware).Delete("/{id}", inviteHandler.DeleteInvite)
 	})
 
 	return r

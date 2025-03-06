@@ -20,7 +20,7 @@ func NewRelationshipDAO(database *db.Database) *RelationshipDAO {
 
 func (dao *RelationshipDAO) CreateRelationship(ctx context.Context, name, picture string) (*models.Relationship, error) {
 	var relationship models.Relationship
-	query := "INSERT INTO relationships (name, picture) values ($1, $2) RETURNING (id, name, picture, created_at)"
+	query := "INSERT INTO relationships (name, picture) values ($1, $2) RETURNING id, name, picture, created_at"
 
 	row := dao.DB.Pool.QueryRow(ctx, query, name, picture)
 	err := row.Scan(&relationship.Id, &relationship.Name, &relationship.Picture, &relationship.CreatedAt)

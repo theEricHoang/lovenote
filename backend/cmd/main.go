@@ -22,8 +22,12 @@ func main() {
 	defer database.Close()
 
 	userDAO := dao.NewUserDAO(database)
+	relationshipDAO := dao.NewRelationshipDAO(database)
+	inviteDAO := dao.NewInviteDAO(database)
 
 	userHandler := handlers.NewUserHandler(userDAO)
+	relationshipHandler := handlers.NewRelationshipHandler(relationshipDAO)
+	inviteHandler := handlers.NewInviteHandler(inviteDAO, relationshipDAO)
 
 	// shutdown signals
 	c := make(chan os.Signal, 1)
@@ -53,7 +57,7 @@ func main() {
 
 	fmt.Printf("\n\tStarting server, listening at port :8000...\n\n")
 
-	r := api.RegisterRoutes(userHandler)
+	r := api.RegisterRoutes(userHandler, relationshipHandler, inviteHandler)
 	err = http.ListenAndServe(":8000", r)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)

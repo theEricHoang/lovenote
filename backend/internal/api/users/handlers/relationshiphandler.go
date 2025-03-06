@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -46,6 +47,7 @@ func (h *RelationshipHandler) CreateRelationshipHandler(w http.ResponseWriter, r
 
 	relationship, err := h.RelationshipDAO.CreateRelationship(r.Context(), req.Name, picture)
 	if err != nil {
+		log.Printf("%v", err)
 		http.Error(w, "Error creating relationship in database", http.StatusInternalServerError)
 		return
 	}

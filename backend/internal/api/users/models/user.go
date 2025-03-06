@@ -1,15 +1,18 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 type User struct {
-	Id             uint   `json:"id"`
-	Username       string `json:"username"`
-	Email          string `json:"email"`
-	ProfilePicture string `json:"profile_picture"`
-	Bio            string `json:"bio"`
-	PasswordHash   string `json:"-"`
-	CreatedAt      string `json:"created_at"`
+	Id             uint      `json:"id"`
+	Username       string    `json:"username"`
+	Email          string    `json:"email"`
+	ProfilePicture string    `json:"profile_picture"`
+	Bio            string    `json:"bio"`
+	PasswordHash   string    `json:"-"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 func (u *User) ToJSON(view string) ([]byte, error) {

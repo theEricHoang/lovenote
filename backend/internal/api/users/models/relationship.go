@@ -1,12 +1,15 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Relationship struct {
-	Id        uint   `json:"id"`
-	Name      string `json:"name"`
-	Picture   string `json:"picture"`
-	CreatedAt string `json:"created_at"`
+	Id        uint      `json:"id"`
+	Name      string    `json:"name"`
+	Picture   string    `json:"picture"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func (r *Relationship) ToJSON(view string) ([]byte, error) {
