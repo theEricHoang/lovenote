@@ -129,3 +129,36 @@ func (dao *UserDAO) DeleteUser(ctx context.Context, userId uint) error {
 
 	return nil
 }
+
+func (dao *UserDAO) SearchUsersByName(ctx context.Context, search string, limit, offset int) ([]models.User, error) {
+	query := `
+		SELECT id, username, email, profile_picture, bio
+		FROM users
+		WHERE username ILIKE $1
+		ORDER BY username
+		LIMIT $2 OFFSET $3
+	`
+	// limit: how many results to return per page
+	// offset: how many results to skip
+
+	rows, err := dao.DB.Pool.Query(ctx, query, "%"+search+"%", limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+		if err := rows.Scan(&user.Id, &user.Username, &user.Email, &user.ProfilePicture, &user.Bio); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
