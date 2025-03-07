@@ -17,11 +17,26 @@ func NewUserDAO(database *db.Database) *UserDAO {
 	return &UserDAO{DB: database}
 }
 
-func (dao *UserDAO) CreateUser(ctx context.Context, username, email, profilePicture, passwordHash string) (uint, error) {
-	var userId uint
-	query := `INSERT INTO users (username, email, profile_picture, password_hash) values ($1, $2, $3, $4) RETURNING id`
-	err := dao.DB.Pool.QueryRow(ctx, query, username, email, profilePicture, passwordHash).Scan(&userId)
-	return userId, err
+func (dao *UserDAO) CreateUser(ctx context.Context, username, email, profilePicture, passwordHash string) (*models.User, error) {
+	tx, err := dao.DB.Pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	var user models.User
+	query := `INSERT INTO users (username, email, profile_picture, password_hash) values ($1, $2, $3, $4)
+		RETURNING id, username, email, profile_picture, password_hash`
+	err = tx.QueryRow(ctx, query, username, email, profilePicture, passwordHash).Scan(&user.Id, &user.Username, &user.Email, &user.ProfilePicture, &user.PasswordHash)
+	if err != nil {
+		return nil, err
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func (dao *UserDAO) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
@@ -50,8 +65,14 @@ func (dao *UserDAO) UpdateUser(ctx context.Context, userId uint, data struct {
 	ProfilePicture *string `json:"profile_picture,omitempty"`
 	Bio            *string `json:"bio,omitempty"`
 }) error {
+	tx, err := dao.DB.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
 	updates := []string{}
-	args := []interface{}{}
+	args := []any{}
 	argPos := 1
 
 	fields := map[string]*string{
@@ -75,12 +96,36 @@ func (dao *UserDAO) UpdateUser(ctx context.Context, userId uint, data struct {
 	query := fmt.Sprintf("UPDATE users SET %s WHERE id = $%d", strings.Join(updates, ", "), argPos)
 	args = append(args, userId)
 
-	_, err := dao.DB.Pool.Exec(ctx, query, args...)
-	return err
+	_, err = tx.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (dao *UserDAO) DeleteUser(ctx context.Context, userId uint) error {
+	tx, err := dao.DB.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
 	query := "DELETE FROM users WHERE id = $1"
-	_, err := dao.DB.Pool.Exec(ctx, query, userId)
-	return err
+	_, err = tx.Exec(ctx, query, userId)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

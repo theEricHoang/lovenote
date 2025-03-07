@@ -47,13 +47,13 @@ func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := h.UserDAO.CreateUser(r.Context(), req.Username, req.Email, profilePicture, hashedPassword)
+	user, err := h.UserDAO.CreateUser(r.Context(), req.Username, req.Email, profilePicture, hashedPassword)
 	if err != nil {
 		http.Error(w, "Error creating user in database", http.StatusInternalServerError)
 		return
 	}
 
-	accessToken, refreshToken, err := auth.GenerateTokens(userId)
+	accessToken, refreshToken, err := auth.GenerateTokens(user.Id)
 	if err != nil {
 		http.Error(w, "Error generating tokens", http.StatusInternalServerError)
 		return
@@ -67,9 +67,9 @@ func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		AccessToken    string `json:"access"`
 		RefreshToken   string `json:"refresh"`
 	}{
-		Id:             userId,
-		Username:       req.Username,
-		Email:          req.Email,
+		Id:             user.Id,
+		Username:       user.Username,
+		Email:          user.Email,
 		ProfilePicture: profilePicture,
 		AccessToken:    accessToken,
 		RefreshToken:   refreshToken,

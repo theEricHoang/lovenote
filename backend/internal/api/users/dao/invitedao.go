@@ -16,6 +16,12 @@ func NewInviteDAO(database *db.Database) *InviteDAO {
 }
 
 func (dao *InviteDAO) CreateInvite(ctx context.Context, relationshipId, inviterId, inviteeId uint, body string) (*models.Invite, error) {
+	tx, err := dao.DB.Pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
 	var invite models.Invite
 	query := `WITH inserted_invite AS (
 		INSERT INTO invites (relationship_id, inviter_id, invitee_id, body)
@@ -39,8 +45,8 @@ func (dao *InviteDAO) CreateInvite(ctx context.Context, relationshipId, inviterI
 		JOIN users inviter ON ii.inviter_id = inviter.id
 		JOIN users invitee ON ii.invitee_id = invitee.id;`
 
-	row := dao.DB.Pool.QueryRow(ctx, query, relationshipId, inviterId, inviteeId, body)
-	err := row.Scan(
+	row := tx.QueryRow(ctx, query, relationshipId, inviterId, inviteeId, body)
+	err = row.Scan(
 		&invite.Id,
 		&invite.Relationship.Id,
 		&invite.Relationship.Name,
@@ -56,6 +62,12 @@ func (dao *InviteDAO) CreateInvite(ctx context.Context, relationshipId, inviterI
 	if err != nil {
 		return nil, err
 	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &invite, nil
 }
 
@@ -71,7 +83,21 @@ func (dao *InviteDAO) GetInviteById(ctx context.Context, inviteId uint) (*models
 }
 
 func (dao *InviteDAO) DeleteInvite(ctx context.Context, inviteId uint) error {
+	tx, err := dao.DB.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
 	query := "DELETE FROM invites WHERE id = $1"
-	_, err := dao.DB.Pool.Exec(ctx, query, inviteId)
-	return err
+	_, err = tx.Exec(ctx, query, inviteId)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }

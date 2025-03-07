@@ -19,14 +19,26 @@ func NewRelationshipDAO(database *db.Database) *RelationshipDAO {
 }
 
 func (dao *RelationshipDAO) CreateRelationship(ctx context.Context, name, picture string) (*models.Relationship, error) {
-	var relationship models.Relationship
-	query := "INSERT INTO relationships (name, picture) values ($1, $2) RETURNING id, name, picture, created_at"
-
-	row := dao.DB.Pool.QueryRow(ctx, query, name, picture)
-	err := row.Scan(&relationship.Id, &relationship.Name, &relationship.Picture, &relationship.CreatedAt)
+	tx, err := dao.DB.Pool.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
+	defer tx.Rollback(ctx)
+
+	var relationship models.Relationship
+	query := "INSERT INTO relationships (name, picture) values ($1, $2) RETURNING id, name, picture, created_at"
+
+	row := tx.QueryRow(ctx, query, name, picture)
+	err = row.Scan(&relationship.Id, &relationship.Name, &relationship.Picture, &relationship.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &relationship, nil
 }
 
@@ -46,6 +58,12 @@ func (dao *RelationshipDAO) UpdateRelationship(ctx context.Context, relationship
 	Name    *string `json:"name,omitempty"`
 	Picture *string `json:"picture,omitempty"`
 }) (*models.Relationship, error) {
+	tx, err := dao.DB.Pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
 	var relationship models.Relationship
 	updates := []string{}
 	args := []interface{}{}
@@ -71,8 +89,13 @@ func (dao *RelationshipDAO) UpdateRelationship(ctx context.Context, relationship
 	query := fmt.Sprintf("UPDATE relationships SET %s WHERE id = $%d RETURNING id, name, picture, created_at", strings.Join(updates, ", "), argPos)
 	args = append(args, relationshipId)
 
-	row := dao.DB.Pool.QueryRow(ctx, query, args...)
-	err := row.Scan(&relationship.Id, &relationship.Name, &relationship.Picture, &relationship.CreatedAt)
+	row := tx.QueryRow(ctx, query, args...)
+	err = row.Scan(&relationship.Id, &relationship.Name, &relationship.Picture, &relationship.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -81,9 +104,24 @@ func (dao *RelationshipDAO) UpdateRelationship(ctx context.Context, relationship
 }
 
 func (dao *RelationshipDAO) DeleteRelationship(ctx context.Context, id uint) error {
+	tx, err := dao.DB.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
 	query := "DELETE FROM relationships WHERE id = $1"
-	_, err := dao.DB.Pool.Exec(ctx, query, id)
-	return err
+	_, err = tx.Exec(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (dao *RelationshipDAO) UserInRelationship(ctx context.Context, relationshipId, userId uint) (bool, error) {
@@ -111,10 +149,25 @@ func (dao *RelationshipDAO) IsUserOnlyMember(ctx context.Context, userID, relati
 }
 
 func (dao *RelationshipDAO) AddUserToRelationship(ctx context.Context, userID, relationshipID uint) error {
+	tx, err := dao.DB.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
 	query := `INSERT INTO relationship_members (relationship_id, user_id)
 		VALUES ($1, $2)
 		ON CONFLICT DO NOTHING`
 
-	_, err := dao.DB.Pool.Exec(ctx, query, relationshipID, userID)
-	return err
+	_, err = tx.Exec(ctx, query, relationshipID, userID)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
