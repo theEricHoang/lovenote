@@ -21,6 +21,7 @@ func RegisterRoutes(userHandler *handlers.UserHandler, relationshipHandler *hand
 
 	// users routes
 	r.Route("/api/users", func(r chi.Router) {
+		r.Get("/", userHandler.SearchUsersHandler)
 		r.Post("/", userHandler.RegisterHandler)
 		r.Post("/login", userHandler.LoginHandler)
 		r.Get("/{id}", userHandler.GetUserHandler)

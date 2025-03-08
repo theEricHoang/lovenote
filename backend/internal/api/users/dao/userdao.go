@@ -130,20 +130,20 @@ func (dao *UserDAO) DeleteUser(ctx context.Context, userId uint) error {
 	return nil
 }
 
-func (dao *UserDAO) SearchUsersByName(ctx context.Context, search string, limit, offset int) ([]models.User, error) {
+func (dao *UserDAO) SearchUsersByName(ctx context.Context, search string, limit, offset int) ([]models.User, int, error) {
 	query := `
 		SELECT id, username, email, profile_picture, bio
 		FROM users
-		WHERE username ILIKE $1
+		WHERE username ILIKE '%' || $1 || '%'
 		ORDER BY username
 		LIMIT $2 OFFSET $3
 	`
 	// limit: how many results to return per page
 	// offset: how many results to skip
 
-	rows, err := dao.DB.Pool.Query(ctx, query, "%"+search+"%", limit, offset)
+	rows, err := dao.DB.Pool.Query(ctx, query, search, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -151,14 +151,21 @@ func (dao *UserDAO) SearchUsersByName(ctx context.Context, search string, limit,
 	for rows.Next() {
 		var user models.User
 		if err := rows.Scan(&user.Id, &user.Username, &user.Email, &user.ProfilePicture, &user.Bio); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		users = append(users, user)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return users, nil
+	var totalCount int
+	countQuery := `SELECT COUNT(*) FROM users WHERE USERNAME ILIKE '%' || $1 || '%'`
+	err = dao.DB.Pool.QueryRow(ctx, countQuery, search).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, totalCount, nil
 }

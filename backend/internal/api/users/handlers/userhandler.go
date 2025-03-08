@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -221,4 +222,55 @@ func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *UserHandler) SearchUsersHandler(w http.ResponseWriter, r *http.Request) {
+	username := r.URL.Query().Get("username")
+	if username == "" {
+		http.Error(w, "Missing 'username' query parameter", http.StatusBadRequest)
+		return
+	}
+
+	// Default values for pagination
+	limit := 10
+	page := 1
+
+	// Parse limit and page (handle errors gracefully)
+	if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil && l > 0 {
+		limit = l
+	}
+	if p, err := strconv.Atoi(r.URL.Query().Get("page")); err == nil && p > 0 {
+		page = p
+	}
+
+	offset := (page - 1) * limit
+
+	users, userCount, err := h.UserDAO.SearchUsersByName(r.Context(), username, limit, offset)
+	if err != nil {
+		http.Error(w, "Failed to search users", http.StatusInternalServerError)
+		return
+	}
+
+	baseUrl := fmt.Sprintf("http://%s%s", r.Host, r.URL.Path)
+	queryParams := fmt.Sprintf("username=%s&limit=%d", username, limit)
+
+	var nextLink, prevLink *string
+	if offset+limit < userCount {
+		next := fmt.Sprintf("%s?%s&page=%d", baseUrl, queryParams, page+1)
+		nextLink = &next
+	}
+	if page > 1 {
+		prev := fmt.Sprintf("%s?%s&page=%d", baseUrl, queryParams, page-1)
+		prevLink = &prev
+	}
+
+	response := map[string]any{
+		"count": userCount,
+		"next":  nextLink,
+		"prev":  prevLink,
+		"users": users,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
