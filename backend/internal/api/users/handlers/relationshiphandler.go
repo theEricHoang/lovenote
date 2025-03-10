@@ -45,17 +45,10 @@ func (h *RelationshipHandler) CreateRelationshipHandler(w http.ResponseWriter, r
 		picture = DefaultRelationshipPicture
 	}
 
-	relationship, err := h.RelationshipDAO.CreateRelationship(r.Context(), req.Name, picture)
+	relationship, err := h.RelationshipDAO.CreateRelationshipAndAddUser(r.Context(), req.Name, picture, userId)
 	if err != nil {
 		log.Printf("%v", err)
 		http.Error(w, "Error creating relationship in database", http.StatusInternalServerError)
-		return
-	}
-
-	// add current user to new relationship
-	err = h.RelationshipDAO.AddUserToRelationship(r.Context(), userId, relationship.Id)
-	if err != nil {
-		http.Error(w, "Error adding user to new relationship", http.StatusInternalServerError)
 		return
 	}
 
@@ -177,4 +170,21 @@ func (h *RelationshipHandler) DeleteRelationshipHandler(w http.ResponseWriter, r
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *RelationshipHandler) GetUserRelationshipsHandler(w http.ResponseWriter, r *http.Request) {
+	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	relationships, err := h.RelationshipDAO.GetUserRelationships(r.Context(), userId)
+	if err != nil {
+		http.Error(w, "Error getting user relationships from database", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(relationships)
 }

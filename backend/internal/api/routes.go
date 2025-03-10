@@ -31,6 +31,7 @@ func RegisterRoutes(userHandler *handlers.UserHandler, relationshipHandler *hand
 
 	r.Route("/api/relationships", func(r chi.Router) {
 		r.With(middleware.AuthenticateMiddleware).Post("/", relationshipHandler.CreateRelationshipHandler)
+		r.With(middleware.AuthenticateMiddleware).Get("/", relationshipHandler.GetUserRelationshipsHandler)
 		r.Get("/{id}", relationshipHandler.GetRelationshipHandler)
 		r.With(middleware.AuthenticateMiddleware).Patch("/{id}", relationshipHandler.UpdateRelationshipHandler)
 		r.With(middleware.AuthenticateMiddleware).Delete("/{id}", relationshipHandler.DeleteRelationshipHandler)
