@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -63,11 +64,13 @@ func (h *InviteHandler) InviteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Check if invite already exists before creating new invite
-
 	// create new invite
 	invite, err := h.InviteDAO.CreateInvite(r.Context(), relationshipId, userId, req.InviteeId, req.Body)
 	if err != nil {
+		if err == dao.ErrInviteAlreadyExists {
+			http.Error(w, "Invite already exists", http.StatusConflict)
+			return
+		}
 		http.Error(w, "Error inserting invite into database", http.StatusInternalServerError)
 		return
 	}
@@ -172,4 +175,54 @@ func (h *InviteHandler) DeleteInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *InviteHandler) GetInvites(w http.ResponseWriter, r *http.Request) {
+	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Default values for pagination
+	limit := 10
+	page := 1
+
+	if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil && l > 0 {
+		limit = l
+	}
+	if p, err := strconv.Atoi(r.URL.Query().Get("page")); err == nil && p > 0 {
+		page = p
+	}
+
+	offset := (page - 1) * limit
+
+	invites, inviteCount, err := h.InviteDAO.GetUserInvites(r.Context(), userId, limit, offset)
+	if err != nil {
+		http.Error(w, "Error fetching invites from database", http.StatusInternalServerError)
+		return
+	}
+
+	baseURL := fmt.Sprintf("http://%s%s", r.Host, r.URL.Path)
+	queryParams := fmt.Sprintf("limit=%d", limit)
+
+	var nextLink, prevLink *string
+	if offset+limit < inviteCount {
+		next := fmt.Sprintf("%s?%s&page=%d", baseURL, queryParams, page+1)
+		nextLink = &next
+	}
+	if page > 1 {
+		prev := fmt.Sprintf("%s?%s&page=%d", baseURL, queryParams, page-1)
+		prevLink = &prev
+	}
+
+	response := map[string]any{
+		"count":   inviteCount,
+		"next":    nextLink,
+		"prev":    prevLink,
+		"invites": invites,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

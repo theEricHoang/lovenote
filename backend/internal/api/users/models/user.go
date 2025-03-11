@@ -6,13 +6,13 @@ import (
 )
 
 type User struct {
-	Id             uint      `json:"id"`
-	Username       string    `json:"username"`
-	Email          string    `json:"email"`
-	ProfilePicture string    `json:"profile_picture"`
-	Bio            string    `json:"bio"`
-	PasswordHash   string    `json:"-"`
-	CreatedAt      time.Time `json:"created_at"`
+	Id             uint       `json:"id,omitempty"`
+	Username       string     `json:"username,omitempty"`
+	Email          string     `json:"email,omitempty"`
+	ProfilePicture string     `json:"profile_picture,omitempty"`
+	Bio            string     `json:"bio,omitempty"`
+	PasswordHash   string     `json:"-"`
+	CreatedAt      *time.Time `json:"created_at,omitempty"`
 }
 
 func (u *User) ToJSON(view string) ([]byte, error) {

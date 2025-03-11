@@ -6,10 +6,10 @@ import (
 )
 
 type Relationship struct {
-	Id        uint      `json:"id"`
-	Name      string    `json:"name"`
-	Picture   string    `json:"picture"`
-	CreatedAt time.Time `json:"created_at"`
+	Id        uint       `json:"id,omitempty"`
+	Name      string     `json:"name,omitempty"`
+	Picture   string     `json:"picture,omitempty"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
 }
 
 func (r *Relationship) ToJSON(view string) ([]byte, error) {

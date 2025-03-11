@@ -2,7 +2,9 @@ package dao
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/theEricHoang/lovenote/backend/internal/api/users/models"
 	db "github.com/theEricHoang/lovenote/backend/internal/pkg"
 )
@@ -14,6 +16,8 @@ type InviteDAO struct {
 func NewInviteDAO(database *db.Database) *InviteDAO {
 	return &InviteDAO{DB: database}
 }
+
+var ErrInviteAlreadyExists = errors.New("invite already exists")
 
 func (dao *InviteDAO) CreateInvite(ctx context.Context, relationshipId, inviterId, inviteeId uint, body string) (*models.Invite, error) {
 	tx, err := dao.DB.Pool.Begin(ctx)
@@ -60,6 +64,11 @@ func (dao *InviteDAO) CreateInvite(ctx context.Context, relationshipId, inviterI
 		&invite.Body,
 	)
 	if err != nil {
+		// 23505 is the error code for a unique constraint violation. Hard coded cuz I didnt want to add another dependency
+		// for error code constants :P
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "23505" {
+			return nil, ErrInviteAlreadyExists
+		}
 		return nil, err
 	}
 
@@ -100,4 +109,58 @@ func (dao *InviteDAO) DeleteInvite(ctx context.Context, inviteId uint) error {
 		return err
 	}
 	return nil
+}
+
+func (dao *InviteDAO) GetUserInvites(ctx context.Context, userID uint, limit, offset int) ([]models.Invite, int, error) {
+	query := `
+		SELECT
+			i.id,
+			r.id,
+			r.name,
+			r.picture,
+			inviter.id,
+			inviter.username,
+			inviter.profile_picture,
+			i.body
+		FROM invites i
+		JOIN relationships r ON i.relationship_id = r.id
+		JOIN users inviter ON i.inviter_id = inviter.id
+		WHERE i.invitee_id = $1
+		ORDER BY i.id DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := dao.DB.Pool.Query(ctx, query, userID, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var invites []models.Invite
+	for rows.Next() {
+		var invite models.Invite
+		err = rows.Scan(
+			&invite.Id,
+			&invite.Relationship.Id,
+			&invite.Relationship.Name,
+			&invite.Relationship.Picture,
+			&invite.Inviter.Id,
+			&invite.Inviter.Username,
+			&invite.Inviter.ProfilePicture,
+			&invite.Body,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		invites = append(invites, invite)
+	}
+
+	var totalCount int
+	query = `SELECT COUNT(*) FROM invites WHERE invitee_id = $1`
+	err = dao.DB.Pool.QueryRow(ctx, query, userID).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return invites, totalCount, nil
 }
