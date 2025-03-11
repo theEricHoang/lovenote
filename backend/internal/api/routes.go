@@ -41,6 +41,7 @@ func RegisterRoutes(userHandler *handlers.UserHandler, relationshipHandler *hand
 	})
 
 	r.Route("/api/invites", func(r chi.Router) {
+		r.With(middleware.AuthenticateMiddleware).Get("/", inviteHandler.GetInvites)
 		r.With(middleware.AuthenticateMiddleware).Post("/{id}", inviteHandler.AcceptInvite)
 		r.With(middleware.AuthenticateMiddleware).Delete("/{id}", inviteHandler.DeleteInvite)
 	})
