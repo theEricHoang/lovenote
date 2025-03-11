@@ -188,3 +188,29 @@ func (h *RelationshipHandler) GetUserRelationshipsHandler(w http.ResponseWriter,
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(relationships)
 }
+
+func (h *RelationshipHandler) GetRelationshipMembersHandler(w http.ResponseWriter, r *http.Request) {
+	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	idParam := chi.URLParam(r, "id")
+
+	id64, err := strconv.ParseUint(idParam, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid relationship id", http.StatusBadRequest)
+		return
+	}
+	id := uint(id64)
+
+	members, err := h.RelationshipDAO.GetRelationshipMembers(r.Context(), id, userId)
+	if err != nil {
+		http.Error(w, "Error getting members from database", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(members)
+}

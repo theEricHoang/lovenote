@@ -230,9 +230,37 @@ func (dao *RelationshipDAO) GetUserRelationships(ctx context.Context, userID uin
 		relationships = append(relationships, relationship)
 	}
 
-	if err := rows.Err(); err != nil {
+	return relationships, nil
+}
+
+func (dao *RelationshipDAO) GetRelationshipMembers(ctx context.Context, relationshipID, requesterID uint) ([]models.User, error) {
+	var members []models.User
+
+	query := `
+		SELECT u.id, u.username, u.profile_picture
+		FROM users u
+		INNER JOIN relationship_members rm ON u.id = rm.user_id
+		WHERE rm.relationship_id = $1
+		AND EXISTS (
+			SELECT 1
+			FROM relationship_members
+			WHERE relationship_id = $1 AND user_id = $2
+		)
+	`
+
+	rows, err := dao.DB.Pool.Query(ctx, query, relationshipID, requesterID)
+	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	return relationships, nil
+	for rows.Next() {
+		var member models.User
+		if err := rows.Scan(&member.Id, &member.Username, &member.ProfilePicture); err != nil {
+			return nil, err
+		}
+		members = append(members, member)
+	}
+
+	return members, nil
 }
