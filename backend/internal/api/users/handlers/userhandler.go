@@ -15,11 +15,12 @@ import (
 const DefaultProfilePicture = "https://img.freepik.com/free-vector/gradient-heart_78370-478.jpg"
 
 type UserHandler struct {
-	UserDAO *dao.UserDAO
+	UserDAO     *dao.UserDAO
+	AuthService *auth.AuthService
 }
 
-func NewUserHandler(userDAO *dao.UserDAO) *UserHandler {
-	return &UserHandler{UserDAO: userDAO}
+func NewUserHandler(userDAO *dao.UserDAO, authService *auth.AuthService) *UserHandler {
+	return &UserHandler{UserDAO: userDAO, AuthService: authService}
 }
 
 func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +43,7 @@ func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		profilePicture = DefaultProfilePicture
 	}
 
-	hashedPassword, err := auth.HashPassword(req.Password)
+	hashedPassword, err := h.AuthService.HashPassword(req.Password)
 	if err != nil {
 		http.Error(w, "Error hashing password", http.StatusInternalServerError)
 		return
@@ -54,7 +55,7 @@ func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, err := auth.GenerateTokens(user.Id)
+	accessToken, refreshToken, err := h.AuthService.GenerateTokens(user.Id)
 	if err != nil {
 		http.Error(w, "Error generating tokens", http.StatusInternalServerError)
 		return
@@ -103,13 +104,13 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = auth.CheckPassword(user.PasswordHash, req.Password)
+	err = h.AuthService.CheckPassword(user.PasswordHash, req.Password)
 	if err != nil {
 		http.Error(w, "Invalid login credentials", http.StatusUnauthorized)
 		return
 	}
 
-	accessToken, refreshToken, err := auth.GenerateTokens(user.Id)
+	accessToken, refreshToken, err := h.AuthService.GenerateTokens(user.Id)
 	if err != nil {
 		http.Error(w, "Error generating tokens", http.StatusInternalServerError)
 		return

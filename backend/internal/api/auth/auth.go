@@ -1,11 +1,13 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	config "github.com/theEricHoang/lovenote/backend/internal"
+	db "github.com/theEricHoang/lovenote/backend/internal/pkg"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,21 +17,44 @@ var (
 	SecretKey          = []byte(config.LoadConfig().JWTSecretKey)
 )
 
+type AuthService struct {
+	DB *db.Database
+}
+
 type Claims struct {
 	UserId uint `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
-func HashPassword(password string) (string, error) {
+func NewAuthService(db *db.Database) *AuthService {
+	return &AuthService{DB: db}
+}
+
+func (s *AuthService) InsertRefreshToken(ctx context.Context, userID uint, tokenStr string, exp time.Time) error {
+	query := `
+		INSERT INTO refresh_tokens (user_id, token, expires_at)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (user_id) DO UPDATE
+		SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
+	`
+	_, err := s.DB.Pool.Exec(ctx, query, userID, tokenStr, exp)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *AuthService) HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(hashedPassword), err
 }
 
-func CheckPassword(hashedPassword, password string) error {
+func (s *AuthService) CheckPassword(hashedPassword, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
-func GenerateTokens(userId uint) (string, string, error) {
+func (s *AuthService) GenerateTokens(userId uint) (string, string, error) {
 	accessClaims := Claims{
 		UserId: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -55,8 +80,11 @@ func GenerateTokens(userId uint) (string, string, error) {
 	return accessToken, refreshToken, nil
 }
 
-func ValidateToken(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
 		return SecretKey, nil
 	})
 	if err != nil {

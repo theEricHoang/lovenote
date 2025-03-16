@@ -9,6 +9,8 @@ import (
 	"syscall"
 
 	"github.com/theEricHoang/lovenote/backend/internal/api"
+	"github.com/theEricHoang/lovenote/backend/internal/api/auth"
+	"github.com/theEricHoang/lovenote/backend/internal/api/middleware"
 	"github.com/theEricHoang/lovenote/backend/internal/api/users/dao"
 	"github.com/theEricHoang/lovenote/backend/internal/api/users/handlers"
 	db "github.com/theEricHoang/lovenote/backend/internal/pkg"
@@ -21,11 +23,13 @@ func main() {
 	}
 	defer database.Close()
 
+	authService := auth.NewAuthService(database)
 	userDAO := dao.NewUserDAO(database)
 	relationshipDAO := dao.NewRelationshipDAO(database)
 	inviteDAO := dao.NewInviteDAO(database)
 
-	userHandler := handlers.NewUserHandler(userDAO)
+	authMiddleware := middleware.NewAuthMiddleware(authService)
+	userHandler := handlers.NewUserHandler(userDAO, authService)
 	relationshipHandler := handlers.NewRelationshipHandler(relationshipDAO)
 	inviteHandler := handlers.NewInviteHandler(inviteDAO, relationshipDAO)
 
@@ -57,7 +61,7 @@ func main() {
 
 	fmt.Printf("\n\tStarting server, listening at port :8000...\n\n")
 
-	r := api.RegisterRoutes(userHandler, relationshipHandler, inviteHandler)
+	r := api.RegisterRoutes(userHandler, relationshipHandler, inviteHandler, authMiddleware)
 	err = http.ListenAndServe(":8000", r)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
