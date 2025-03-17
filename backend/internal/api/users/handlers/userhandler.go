@@ -7,12 +7,15 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	config "github.com/theEricHoang/lovenote/backend/internal"
 	"github.com/theEricHoang/lovenote/backend/internal/api/auth"
 	"github.com/theEricHoang/lovenote/backend/internal/api/middleware"
 	"github.com/theEricHoang/lovenote/backend/internal/api/users/dao"
 )
 
 const DefaultProfilePicture = "https://img.freepik.com/free-vector/gradient-heart_78370-478.jpg"
+
+var cfg config.Config = config.LoadConfig()
 
 type UserHandler struct {
 	UserDAO     *dao.UserDAO
@@ -55,7 +58,7 @@ func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, err := h.AuthService.GenerateTokens(user.Id)
+	accessToken, refreshToken, err := h.AuthService.GenerateTokens(r.Context(), user.Id)
 	if err != nil {
 		http.Error(w, "Error generating tokens", http.StatusInternalServerError)
 		return
@@ -67,18 +70,28 @@ func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		Email          string `json:"email"`
 		ProfilePicture string `json:"profile_picture"`
 		AccessToken    string `json:"access"`
-		RefreshToken   string `json:"refresh"`
 	}{
 		Id:             user.Id,
 		Username:       user.Username,
 		Email:          user.Email,
 		ProfilePicture: profilePicture,
 		AccessToken:    accessToken,
-		RefreshToken:   refreshToken,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.WriteHeader(http.StatusCreated)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HttpOnly: true,
+		Secure:   cfg.IsProduction,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/api/refresh",
+		MaxAge:   60 * 60 * 24 * 7, // 7 days
+	})
+
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		http.Error(w, "Error encoding new user to JSON", http.StatusInternalServerError)
@@ -110,7 +123,7 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, err := h.AuthService.GenerateTokens(user.Id)
+	accessToken, refreshToken, err := h.AuthService.GenerateTokens(r.Context(), user.Id)
 	if err != nil {
 		http.Error(w, "Error generating tokens", http.StatusInternalServerError)
 		return
@@ -122,22 +135,80 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Email          string `json:"email"`
 		ProfilePicture string `json:"profile_picture"`
 		AccessToken    string `json:"access"`
-		RefreshToken   string `json:"refresh"`
 	}{
 		Id:             user.Id,
 		Username:       user.Username,
 		Email:          user.Email,
 		ProfilePicture: user.ProfilePicture,
 		AccessToken:    accessToken,
-		RefreshToken:   refreshToken,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(res)
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HttpOnly: true,
+		Secure:   cfg.IsProduction,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/api/refresh",
+		MaxAge:   60 * 60 * 24 * 7, // 7 days
+	})
+
+	json.NewEncoder(w).Encode(res)
+}
+
+func (h *UserHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
+	refreshToken, err := r.Cookie("refresh_token")
 	if err != nil {
-		http.Error(w, "Error encoding user to JSON", http.StatusInternalServerError)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+
+	claims, err := h.AuthService.ValidateToken(refreshToken.Value)
+	if err != nil {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	realToken, err := h.AuthService.GetRefreshToken(r.Context(), claims.UserId)
+	if err != nil {
+		http.Error(w, "Error getting refresh token from database", http.StatusInternalServerError)
+		return
+	}
+
+	if refreshToken.Value != realToken {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	newAccess, newRefresh, err := h.AuthService.GenerateTokens(r.Context(), claims.UserId)
+	if err != nil {
+		http.Error(w, "Error generating new tokens", http.StatusInternalServerError)
+		return
+	}
+
+	res := struct {
+		AccessToken string `json:"access"`
+	}{
+		AccessToken: newAccess,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    newRefresh,
+		HttpOnly: true,
+		Secure:   cfg.IsProduction,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/api/refresh",
+		MaxAge:   60 * 60 * 24 * 7, // 7 days
+	})
+
+	json.NewEncoder(w).Encode(res)
 }
 
 func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {

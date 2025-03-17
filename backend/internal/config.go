@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -10,6 +11,7 @@ import (
 type Config struct {
 	JWTSecretKey string
 	DatabaseURL  string
+	IsProduction bool
 }
 
 func LoadConfig() Config {
@@ -21,6 +23,7 @@ func LoadConfig() Config {
 	config := Config{
 		JWTSecretKey: getEnv("JWT_SECRET_KEY", ""),
 		DatabaseURL:  getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/lovenote?sslmode=disable"),
+		IsProduction: getEnvAsBool("PRODUCTION", false),
 	}
 
 	if config.JWTSecretKey == "" {
@@ -36,4 +39,19 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// Convert string env variable to bool
+func getEnvAsBool(key string, defaultValue bool) bool {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+
+	// Check if the value is "1", "true", or "yes" (case-insensitive)
+	boolValue, err := strconv.ParseBool(value)
+	if err != nil {
+		return defaultValue
+	}
+	return boolValue
 }
