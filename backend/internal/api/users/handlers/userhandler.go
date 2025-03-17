@@ -88,7 +88,7 @@ func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   cfg.IsProduction,
 		SameSite: http.SameSiteStrictMode,
-		Path:     "/api/refresh",
+		Path:     "/api/users/refresh",
 		MaxAge:   60 * 60 * 24 * 7, // 7 days
 	})
 
@@ -152,7 +152,7 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   cfg.IsProduction,
 		SameSite: http.SameSiteStrictMode,
-		Path:     "/api/refresh",
+		Path:     "/api/users/refresh",
 		MaxAge:   60 * 60 * 24 * 7, // 7 days
 	})
 
@@ -204,7 +204,7 @@ func (h *UserHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request
 		HttpOnly: true,
 		Secure:   cfg.IsProduction,
 		SameSite: http.SameSiteStrictMode,
-		Path:     "/api/refresh",
+		Path:     "/api/users/refresh",
 		MaxAge:   60 * 60 * 24 * 7, // 7 days
 	})
 

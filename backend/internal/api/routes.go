@@ -25,6 +25,7 @@ func RegisterRoutes(userHandler *handlers.UserHandler, relationshipHandler *hand
 		r.Post("/", userHandler.RegisterHandler)
 		r.Post("/login", userHandler.LoginHandler)
 		r.Get("/{id}", userHandler.GetUserHandler)
+		r.Post("/refresh", userHandler.RefreshTokenHandler)
 		r.With(authMiddleware.AuthenticateMiddleware).Patch("/me", userHandler.UpdateUserHandler)
 		r.With(authMiddleware.AuthenticateMiddleware).Delete("/me", userHandler.DeleteUserHandler)
 	})
