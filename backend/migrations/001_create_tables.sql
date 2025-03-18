@@ -13,6 +13,7 @@ create table notes (
     content text not null,
     position_x decimal(10, 2) default 0,
     position_y decimal(10, 2) default 0,
+    color varchar(7) not null default '#FFFFFF',
     created_at timestamp default current_timestamp
 );
 
