@@ -8,6 +8,7 @@ create table users (
 
 create table notes (
     id serial primary key,
+    relationship_id int references relationships(id) on delete cascade,
     author_id int references users(id) on delete cascade,
     title varchar(255) not null,
     content text not null,
@@ -28,12 +29,6 @@ create table relationship_members (
     relationship_id int references relationships(id) on delete cascade,
     user_id int references users(id) on delete cascade,
     primary key (relationship_id, user_id)
-);
-
-create table relationship_notes (
-    relationship_id int references relationships(id) on delete cascade,
-    note_id int references notes(id) on delete cascade,
-    primary key (relationship_id, note_id)
 );
 
 create table invites (

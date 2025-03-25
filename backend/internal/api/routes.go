@@ -6,11 +6,18 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/theEricHoang/lovenote/backend/internal/api/middleware"
+	notehandlers "github.com/theEricHoang/lovenote/backend/internal/api/notes/handlers"
 	"github.com/theEricHoang/lovenote/backend/internal/api/users/handlers"
 )
 
 // define routes here
-func RegisterRoutes(userHandler *handlers.UserHandler, relationshipHandler *handlers.RelationshipHandler, inviteHandler *handlers.InviteHandler, authMiddleware *middleware.AuthMiddleware) chi.Router {
+func RegisterRoutes(
+	userHandler *handlers.UserHandler,
+	relationshipHandler *handlers.RelationshipHandler,
+	inviteHandler *handlers.InviteHandler,
+	noteHandler *notehandlers.NoteHandler,
+	authMiddleware *middleware.AuthMiddleware,
+) chi.Router {
 	r := chi.NewRouter()
 	r.Use(chimiddleware.StripSlashes)
 	r.Use(chimiddleware.Logger)
@@ -37,6 +44,8 @@ func RegisterRoutes(userHandler *handlers.UserHandler, relationshipHandler *hand
 		r.With(authMiddleware.AuthenticateMiddleware).Get("/{id}/members", relationshipHandler.GetRelationshipMembersHandler)
 		r.With(authMiddleware.AuthenticateMiddleware).Patch("/{id}", relationshipHandler.UpdateRelationshipHandler)
 		r.With(authMiddleware.AuthenticateMiddleware).Delete("/{id}", relationshipHandler.DeleteRelationshipHandler)
+
+		r.With(authMiddleware.AuthenticateMiddleware).Post("/{id}", noteHandler.CreateNote)
 
 		r.With(authMiddleware.AuthenticateMiddleware).Post("/{id}/invite", inviteHandler.InviteUser)
 	})
