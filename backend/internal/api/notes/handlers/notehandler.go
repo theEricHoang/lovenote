@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/theEricHoang/lovenote/backend/internal/api/middleware"
@@ -82,4 +83,38 @@ func (h *NoteHandler) CreateNote(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(note)
+}
+
+func (h *NoteHandler) GetRelationshipNotes(w http.ResponseWriter, r *http.Request) {
+	relationshipID, ok := r.Context().Value(middleware.RelationshipIDKey).(int)
+	if !ok {
+		http.Error(w, "Missing relationship ID", http.StatusBadRequest)
+		return
+	}
+
+	// default month and year
+	now := time.Now()
+	month := int(now.Month())
+	year := int(now.Year())
+
+	// parse month and year
+	if m, err := strconv.Atoi(r.URL.Query().Get("month")); err == nil && m > 0 && m < 13 {
+		month = m
+	}
+	if y, err := strconv.Atoi(r.URL.Query().Get("year")); err == nil && y > 0 {
+		year = y
+	}
+
+	notes, err := h.NoteDAO.GetNotesByRelationshipAndMonth(r.Context(), relationshipID, month, year)
+	if err != nil {
+		http.Error(w, "Error getting notes from database", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(notes)
+}
+
+func (h *NoteHandler) EditNote(w http.ResponseWriter, r *http.Request) {
+
 }

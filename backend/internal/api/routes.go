@@ -17,6 +17,7 @@ func RegisterRoutes(
 	inviteHandler *handlers.InviteHandler,
 	noteHandler *notehandlers.NoteHandler,
 	authMiddleware *middleware.AuthMiddleware,
+	relationshipMiddleware *middleware.RelationshipMiddleware,
 ) chi.Router {
 	r := chi.NewRouter()
 	r.Use(chimiddleware.StripSlashes)
@@ -42,12 +43,13 @@ func RegisterRoutes(
 		r.With(authMiddleware.AuthenticateMiddleware).Get("/", relationshipHandler.GetUserRelationshipsHandler)
 		r.Get("/{id}", relationshipHandler.GetRelationshipHandler)
 		r.With(authMiddleware.AuthenticateMiddleware).Get("/{id}/members", relationshipHandler.GetRelationshipMembersHandler)
-		r.With(authMiddleware.AuthenticateMiddleware).Patch("/{id}", relationshipHandler.UpdateRelationshipHandler)
-		r.With(authMiddleware.AuthenticateMiddleware).Delete("/{id}", relationshipHandler.DeleteRelationshipHandler)
+		r.With(authMiddleware.AuthenticateMiddleware, relationshipMiddleware.IsInRelationship).Patch("/{id}", relationshipHandler.UpdateRelationshipHandler)
+		r.With(authMiddleware.AuthenticateMiddleware, relationshipMiddleware.IsInRelationship).Delete("/{id}", relationshipHandler.DeleteRelationshipHandler)
 
-		r.With(authMiddleware.AuthenticateMiddleware).Post("/{id}", noteHandler.CreateNote)
+		r.With(authMiddleware.AuthenticateMiddleware, relationshipMiddleware.IsInRelationship).Post("/{id}/notes", noteHandler.CreateNote)
+		r.With(authMiddleware.AuthenticateMiddleware, relationshipMiddleware.IsInRelationship).Get("/{id}/notes", noteHandler.GetRelationshipNotes)
 
-		r.With(authMiddleware.AuthenticateMiddleware).Post("/{id}/invite", inviteHandler.InviteUser)
+		r.With(authMiddleware.AuthenticateMiddleware, relationshipMiddleware.IsInRelationship).Post("/{id}/invite", inviteHandler.InviteUser)
 	})
 
 	r.Route("/api/invites", func(r chi.Router) {

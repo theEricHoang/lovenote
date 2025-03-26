@@ -28,23 +28,10 @@ func (h *InviteHandler) InviteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get relationship ID from url
-	relationshipIdParam := chi.URLParam(r, "id")
-	relationshipId64, err := strconv.ParseUint(relationshipIdParam, 10, 32)
-	if err != nil {
-		http.Error(w, "Invalid relationship id", http.StatusBadRequest)
-		return
-	}
-	relationshipId := uint(relationshipId64)
-
-	// check if inviter is in relationship
-	inviterInRelationship, err := h.RelationshipDAO.UserInRelationship(r.Context(), relationshipId, userId)
-	if err != nil {
-		http.Error(w, "Error checking if user is in relationship", http.StatusInternalServerError)
-		return
-	}
-	if !inviterInRelationship {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	// get relationship info
+	relationshipId, ok := r.Context().Value(middleware.RelationshipIDKey).(uint)
+	if !ok {
+		http.Error(w, "Missing relationship ID", http.StatusBadRequest)
 		return
 	}
 
@@ -53,7 +40,7 @@ func (h *InviteHandler) InviteUser(w http.ResponseWriter, r *http.Request) {
 		Body      string `json:"body"`
 	}
 
-	err = json.NewDecoder(r.Body).Decode(&req)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return

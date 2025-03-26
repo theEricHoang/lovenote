@@ -27,6 +27,9 @@ func (dao *InviteDAO) CreateInvite(ctx context.Context, relationshipId, inviterI
 	defer tx.Rollback(ctx)
 
 	var invite models.Invite
+	invite.Relationship = &models.Relationship{}
+	invite.Inviter = &models.User{}
+	invite.Invitee = &models.User{}
 	query := `WITH inserted_invite AS (
 		INSERT INTO invites (relationship_id, inviter_id, invitee_id, body)
 		VALUES ($1, $2, $3, $4)

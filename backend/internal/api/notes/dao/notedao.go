@@ -7,6 +7,8 @@ import (
 
 	"github.com/theEricHoang/lovenote/backend/internal/api/notes/models"
 	db "github.com/theEricHoang/lovenote/backend/internal/pkg"
+
+	usermodels "github.com/theEricHoang/lovenote/backend/internal/api/users/models"
 )
 
 type NoteDAO struct {
@@ -25,6 +27,7 @@ func (dao *NoteDAO) CreateNote(ctx context.Context, authorID uint, title, conten
 	defer tx.Rollback(ctx)
 
 	var note models.Note
+	note.Author = &usermodels.User{}
 	query := `
 		WITH inserted_note AS (
 			INSERT INTO notes (author_id, title, content, position_x, position_y, color)
@@ -71,7 +74,7 @@ func (dao *NoteDAO) CreateNote(ctx context.Context, authorID uint, title, conten
 	return &note, nil
 }
 
-func (dao *NoteDAO) GetNotesByRelationshipAndMonth(ctx context.Context, relationshipID, month, year uint) ([]models.Note, error) {
+func (dao *NoteDAO) GetNotesByRelationshipAndMonth(ctx context.Context, relationshipID, month, year int) ([]models.Note, error) {
 	query := `
 		SELECT
 			n.id,

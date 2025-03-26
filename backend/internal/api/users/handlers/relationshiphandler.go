@@ -86,28 +86,10 @@ func (h *RelationshipHandler) GetRelationshipHandler(w http.ResponseWriter, r *h
 }
 
 func (h *RelationshipHandler) UpdateRelationshipHandler(w http.ResponseWriter, r *http.Request) {
-	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	// get relationship info
+	relationshipID, ok := r.Context().Value(middleware.RelationshipIDKey).(uint)
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	idParam := chi.URLParam(r, "id")
-
-	id64, err := strconv.ParseUint(idParam, 10, 32)
-	if err != nil {
-		http.Error(w, "Invalid relationship id", http.StatusBadRequest)
-		return
-	}
-	id := uint(id64)
-
-	userInRelationship, err := h.RelationshipDAO.UserInRelationship(r.Context(), id, userId)
-	if err != nil {
-		http.Error(w, "Error checking if current user is in the requested relationship", http.StatusInternalServerError)
-		return
-	}
-	if !userInRelationship {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		http.Error(w, "Missing relationship ID", http.StatusBadRequest)
 		return
 	}
 
@@ -116,13 +98,13 @@ func (h *RelationshipHandler) UpdateRelationshipHandler(w http.ResponseWriter, r
 		Picture *string `json:"picture,omitempty"`
 	}
 
-	err = json.NewDecoder(r.Body).Decode(&req)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	relationship, err := h.RelationshipDAO.UpdateRelationship(r.Context(), id, req)
+	relationship, err := h.RelationshipDAO.UpdateRelationship(r.Context(), relationshipID, req)
 	if err != nil {
 		http.Error(w, "Error updating relationship", http.StatusInternalServerError)
 		return
@@ -137,23 +119,22 @@ func (h *RelationshipHandler) UpdateRelationshipHandler(w http.ResponseWriter, r
 }
 
 func (h *RelationshipHandler) DeleteRelationshipHandler(w http.ResponseWriter, r *http.Request) {
-	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	// get user info
+	userID, ok := r.Context().Value(middleware.UserIDKey).(uint)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	idParam := chi.URLParam(r, "id")
-
-	id64, err := strconv.ParseUint(idParam, 10, 32)
-	if err != nil {
-		http.Error(w, "Invalid relationship id", http.StatusBadRequest)
+	// get relationship info
+	relationshipID, ok := r.Context().Value(middleware.RelationshipIDKey).(uint)
+	if !ok {
+		http.Error(w, "Missing relationship ID", http.StatusBadRequest)
 		return
 	}
-	id := uint(id64)
 
 	// check to see if user is the only person in relationship
-	isOnly, err := h.RelationshipDAO.IsUserOnlyMember(r.Context(), userId, id)
+	isOnly, err := h.RelationshipDAO.IsUserOnlyMember(r.Context(), userID, relationshipID)
 	if err != nil {
 		http.Error(w, "Error checking permissions", http.StatusInternalServerError)
 		return
@@ -163,7 +144,7 @@ func (h *RelationshipHandler) DeleteRelationshipHandler(w http.ResponseWriter, r
 		return
 	}
 
-	err = h.RelationshipDAO.DeleteRelationship(r.Context(), id)
+	err = h.RelationshipDAO.DeleteRelationship(r.Context(), relationshipID)
 	if err != nil {
 		http.Error(w, "Error deleting relationship", http.StatusInternalServerError)
 		return
