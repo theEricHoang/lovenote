@@ -116,5 +116,52 @@ func (h *NoteHandler) GetRelationshipNotes(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *NoteHandler) EditNote(w http.ResponseWriter, r *http.Request) {
+	noteIDParam := chi.URLParam(r, "note_id")
+	noteID64, err := strconv.ParseUint(noteIDParam, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid relationship id", http.StatusBadRequest)
+		return
+	}
+	noteID := int(noteID64)
 
+	var req struct {
+		Title     *string  `json:"title,omitempty"`
+		Content   *string  `json:"content,omitempty"`
+		PositionX *float32 `json:"position_x,omitempty"`
+		PositionY *float32 `json:"position_y,omitempty"`
+		Color     *string  `json:"color,omitempty"`
+	}
+
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err = h.NoteDAO.UpdateNote(r.Context(), noteID, req)
+	if err != nil {
+		http.Error(w, "Error updating note in database", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Note updated successfully"})
+}
+
+func (h *NoteHandler) DeleteNote(w http.ResponseWriter, r *http.Request) {
+	noteIDParam := chi.URLParam(r, "note_id")
+	noteID64, err := strconv.ParseUint(noteIDParam, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid relationship id", http.StatusBadRequest)
+		return
+	}
+	noteID := uint(noteID64)
+
+	err = h.NoteDAO.DeleteNote(r.Context(), noteID)
+	if err != nil {
+		http.Error(w, "Error deleting note", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

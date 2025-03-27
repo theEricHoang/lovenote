@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/theEricHoang/lovenote/backend/internal/api/auth"
+	notedao "github.com/theEricHoang/lovenote/backend/internal/api/notes/dao"
 	"github.com/theEricHoang/lovenote/backend/internal/api/users/dao"
 )
 
@@ -57,15 +58,16 @@ func (m *AuthMiddleware) AuthenticateMiddleware(next http.Handler) http.Handler 
 	})
 }
 
-type RelationshipMiddleware struct {
+type PermissionsMiddleware struct {
 	RelationshipDAO *dao.RelationshipDAO
+	NoteDAO         *notedao.NoteDAO
 }
 
-func NewRelationshipMiddleware(relationshipDAO *dao.RelationshipDAO) *RelationshipMiddleware {
-	return &RelationshipMiddleware{RelationshipDAO: relationshipDAO}
+func NewPermissionsMiddleware(relationshipDAO *dao.RelationshipDAO, noteDAO *notedao.NoteDAO) *PermissionsMiddleware {
+	return &PermissionsMiddleware{RelationshipDAO: relationshipDAO, NoteDAO: noteDAO}
 }
 
-func (m *RelationshipMiddleware) IsInRelationship(next http.Handler) http.Handler {
+func (m *PermissionsMiddleware) IsInRelationship(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(UserIDKey).(uint)
 		if !ok {
@@ -93,5 +95,36 @@ func (m *RelationshipMiddleware) IsInRelationship(next http.Handler) http.Handle
 
 		ctx := context.WithValue(r.Context(), RelationshipIDKey, relationshipID)
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (m *PermissionsMiddleware) IsNoteOwner(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := r.Context().Value(UserIDKey).(uint)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		noteIDParam := chi.URLParam(r, "note_id")
+		noteID64, err := strconv.ParseUint(noteIDParam, 10, 32)
+		if err != nil {
+			http.Error(w, "Invalid note id", http.StatusBadRequest)
+			return
+		}
+		noteID := int(noteID64)
+
+		note, err := m.NoteDAO.GetNoteByID(r.Context(), noteID)
+		if err != nil {
+			http.Error(w, "Note does not exist", http.StatusBadRequest)
+			return
+		}
+
+		if userID != note.Author.Id {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }

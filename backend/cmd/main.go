@@ -33,7 +33,7 @@ func main() {
 	noteDAO := notedao.NewNoteDAO(database)
 
 	authMiddleware := middleware.NewAuthMiddleware(authService)
-	relationshipMiddleware := middleware.NewRelationshipMiddleware(relationshipDAO)
+	permissionsMiddleware := middleware.NewPermissionsMiddleware(relationshipDAO, noteDAO)
 
 	userHandler := handlers.NewUserHandler(userDAO, authService)
 	relationshipHandler := handlers.NewRelationshipHandler(relationshipDAO)
@@ -68,7 +68,7 @@ func main() {
 
 	fmt.Printf("\n\tStarting server, listening at port :8000...\n\n")
 
-	r := api.RegisterRoutes(userHandler, relationshipHandler, inviteHandler, noteHandler, authMiddleware, relationshipMiddleware)
+	r := api.RegisterRoutes(userHandler, relationshipHandler, inviteHandler, noteHandler, authMiddleware, permissionsMiddleware)
 	err = http.ListenAndServe(":8000", r)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)

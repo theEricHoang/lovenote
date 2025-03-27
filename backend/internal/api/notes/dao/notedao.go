@@ -74,6 +74,45 @@ func (dao *NoteDAO) CreateNote(ctx context.Context, authorID uint, title, conten
 	return &note, nil
 }
 
+func (dao *NoteDAO) GetNoteByID(ctx context.Context, noteID int) (*models.Note, error) {
+	query := `
+		SELECT
+			n.id,
+			a.id,
+			a.username,
+			a.profile_picture,
+			n.title,
+			n.content,
+			n.position_x,
+			n.position_y,
+			n.color,
+			n.created_at
+		FROM notes n
+		JOIN users a ON n.author_id = a.id
+		WHERE n.id= $1
+	`
+
+	var note models.Note
+	note.Author = &usermodels.User{}
+	err := dao.DB.Pool.QueryRow(ctx, query, noteID).Scan(
+		&note.Id,
+		&note.Author.Id,
+		&note.Author.Username,
+		&note.Author.ProfilePicture,
+		&note.Title,
+		&note.Content,
+		&note.PositionX,
+		&note.PositionY,
+		&note.Color,
+		&note.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &note, nil
+}
+
 func (dao *NoteDAO) GetNotesByRelationshipAndMonth(ctx context.Context, relationshipID, month, year int) ([]models.Note, error) {
 	query := `
 		SELECT
@@ -103,6 +142,7 @@ func (dao *NoteDAO) GetNotesByRelationshipAndMonth(ctx context.Context, relation
 	var notes []models.Note
 	for rows.Next() {
 		var note models.Note
+		note.Author = &usermodels.User{}
 		err = rows.Scan(
 			&note.Id,
 			&note.Author.Id,
@@ -124,7 +164,7 @@ func (dao *NoteDAO) GetNotesByRelationshipAndMonth(ctx context.Context, relation
 	return notes, nil
 }
 
-func (dao *NoteDAO) UpdateNote(ctx context.Context, noteID uint, data struct {
+func (dao *NoteDAO) UpdateNote(ctx context.Context, noteID int, data struct {
 	Title     *string  `json:"title,omitempty"`
 	Content   *string  `json:"content,omitempty"`
 	PositionX *float32 `json:"position_x,omitempty"`
