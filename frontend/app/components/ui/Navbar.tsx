@@ -1,5 +1,6 @@
 import Button from "./Button";
 import Logo from "./Logo";
+import NavButton from "./NavButton";
 
 export default function NavBar() {
   return (
@@ -9,8 +10,8 @@ export default function NavBar() {
 
       {/* Right Side: Buttons */}
       <div className="flex space-x-4">
-        <Button variant="outline">Login</Button>
-        <Button>Sign Up</Button>
+        <NavButton to="/login" variant="outline">Login</NavButton>
+        <NavButton to="/register">Sign Up</NavButton>
       </div>
     </nav>
   );
