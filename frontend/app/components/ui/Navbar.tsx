@@ -1,10 +1,9 @@
-import Button from "./Button";
 import Logo from "./Logo";
 import NavButton from "./NavButton";
 
 export default function NavBar() {
   return (
-    <nav className="flex justify-between items-center px-6 py-4 bg-white/50 backdrop-blur-2xl shadow-md">
+    <nav className="sticky top-0 flex justify-between items-center px-6 py-4 bg-white/50 backdrop-blur-2xl shadow-md">
       {/* Left Side: Logo */}
       <Logo />
 
