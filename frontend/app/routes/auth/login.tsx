@@ -1,7 +1,60 @@
+import { Link } from "react-router";
+import Button from "~/components/ui/Button";
+
 export default function Login() {
   return (
     <div className="flex size-full min-h-min flex-col items-center justify-center overflow-y-auto p-12">
-      
+      <form className="w-full max-w-md">
+        <h1 className="text-black text-center font-bold text-3xl">login</h1>
+        <div className="mt-6">
+          <label
+            className="block items-center text-sm font-medium leading-5 text-black"
+            htmlFor="username"
+          >
+            username
+          </label>
+          <input
+            className="block w-full mt-1 px-3 py-2 text-black placeholder:text-gray-300 focus:border-rose-400 focus:outline-none focus:ring-4 focus:ring-rose-50 shadow-sm border border-slate-300 rounded-md"
+            aria-label="username"
+            id="username"
+            placeholder="username"
+            step="1"
+            type="text"
+            required
+          />
+        </div>
+
+        <div className="mt-6">
+          <label
+            className="block items-center text-sm font-medium leading-5 text-black"
+            htmlFor="password"
+          >
+            password
+          </label>
+          <input
+            className="block w-full mt-1 px-3 py-2 text-black placeholder:text-gray-300 focus:border-rose-400 focus:outline-none focus:ring-4 focus:ring-rose-50 shadow-sm border border-slate-300 rounded-md"
+            aria-label="password"
+            id="password"
+            placeholder="password"
+            step="1"
+            type="password"
+            required
+          />
+        </div>
+
+        <Button
+          className="mt-12 block w-full"
+          size="lg"
+        >
+          login
+        </Button>
+
+        <div className="text-black text-sm mt-4">
+          {"don't have an account? "}
+          <Link className="text-rose-400" to="/register">register here</Link>
+          .
+        </div>
+      </form>
     </div>
   );
 }
