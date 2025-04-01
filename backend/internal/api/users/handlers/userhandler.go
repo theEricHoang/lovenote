@@ -28,10 +28,10 @@ func NewUserHandler(userDAO *dao.UserDAO, authService *auth.AuthService) *UserHa
 
 func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Username       string `json:"username"`
-		Email          string `json:"email"`
-		ProfilePicture string `json:"profile_picture"`
-		Password       string `json:"password"`
+		Username       string  `json:"username"`
+		Email          string  `json:"email"`
+		ProfilePicture *string `json:"profile_picture,omitempty"`
+		Password       string  `json:"password"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -41,9 +41,9 @@ func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// use default profile picture when its not provided
-	profilePicture := req.ProfilePicture
-	if profilePicture == "" {
-		profilePicture = DefaultProfilePicture
+	profilePicture := DefaultProfilePicture
+	if req.ProfilePicture != nil {
+		profilePicture = *req.ProfilePicture
 	}
 
 	hashedPassword, err := h.AuthService.HashPassword(req.Password)

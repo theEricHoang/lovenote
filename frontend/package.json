@@ -11,6 +11,8 @@
   "dependencies": {
     "@react-router/node": "^7.4.0",
     "@react-router/serve": "^7.4.0",
+    "@tanstack/react-query": "^5.71.1",
+    "axios": "^1.8.4",
     "isbot": "^5.1.17",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -20,6 +22,7 @@
   "devDependencies": {
     "@react-router/dev": "^7.4.0",
     "@tailwindcss/vite": "^4.0.0",
+    "@tanstack/eslint-plugin-query": "^5.68.0",
     "@types/node": "^20",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
