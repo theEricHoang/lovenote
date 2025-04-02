@@ -1,9 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "react-router";
 import Button from "~/components/ui/Button";
+import { useAuth } from "~/lib/auth";
 import { api } from "~/lib/http";
 
 export default function Register() {
+  const { setUser, setAccessToken } = useAuth();
+
   const register = useMutation({
     mutationFn: (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -15,6 +18,17 @@ export default function Register() {
         password: string;
       };
       return api.post("/users", userData);
+    },
+    onSuccess: (data) => {
+      setUser({
+        id: data.data.id,
+        username: data.data.username,
+        profilePicture: data.data.profile_picture,
+        createdAt: data.data.created_at,
+      });
+      setAccessToken(data.data.access);
+
+      // TODO: redirect to logged in view...
     },
   });
 
