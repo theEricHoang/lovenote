@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { setUpRequestInterceptors, setUpResponseInterceptors } from "./http";
 
 interface User {
   id: number;
@@ -25,6 +26,14 @@ export function AuthProvider({
 }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+
+  // expose access token so it can be used outside of React
+  const getAccessToken = () => accessToken;
+
+  useEffect(() => {
+    setUpRequestInterceptors(getAccessToken);
+    setUpResponseInterceptors(setAccessToken);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, setUser, accessToken, setAccessToken }}>
