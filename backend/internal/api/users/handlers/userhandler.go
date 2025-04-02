@@ -82,12 +82,17 @@ func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.WriteHeader(http.StatusCreated)
 
+	sameSiteMode := http.SameSiteStrictMode
+	if !cfg.IsProduction {
+		sameSiteMode = http.SameSiteNoneMode
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
 		HttpOnly: true,
-		Secure:   cfg.IsProduction,
-		SameSite: http.SameSiteStrictMode,
+		Secure:   true,
+		SameSite: sameSiteMode,
 		Path:     "/api/users/refresh",
 		MaxAge:   60 * 60 * 24 * 7, // 7 days
 	})
@@ -146,12 +151,17 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
+	sameSiteMode := http.SameSiteStrictMode
+	if !cfg.IsProduction {
+		sameSiteMode = http.SameSiteNoneMode
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
 		HttpOnly: true,
-		Secure:   cfg.IsProduction,
-		SameSite: http.SameSiteStrictMode,
+		Secure:   true,
+		SameSite: sameSiteMode,
 		Path:     "/api/users/refresh",
 		MaxAge:   60 * 60 * 24 * 7, // 7 days
 	})
@@ -198,12 +208,17 @@ func (h *UserHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
+	sameSiteMode := http.SameSiteStrictMode
+	if !cfg.IsProduction {
+		sameSiteMode = http.SameSiteNoneMode
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    newRefresh,
 		HttpOnly: true,
-		Secure:   cfg.IsProduction,
-		SameSite: http.SameSiteStrictMode,
+		Secure:   true,
+		SameSite: sameSiteMode,
 		Path:     "/api/users/refresh",
 		MaxAge:   60 * 60 * 24 * 7, // 7 days
 	})
