@@ -262,6 +262,41 @@ func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *UserHandler) GetSelfHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.UserDAO.GetUserById(r.Context(), userID)
+	if err != nil {
+		http.Error(w, "User does not exist", http.StatusNotFound)
+		return
+	}
+
+	res := struct {
+		Id             uint   `json:"id"`
+		Username       string `json:"username"`
+		ProfilePicture string `json:"profile_picture"`
+		Email          string `json:"email"`
+		Bio            string `json:"bio"`
+	}{
+		Id:             user.Id,
+		Username:       user.Username,
+		ProfilePicture: user.ProfilePicture,
+		Email:          user.Email,
+		Bio:            user.Bio,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		http.Error(w, "Error encoding user to JSON", http.StatusInternalServerError)
+		return
+	}
+}
+
 func (h *UserHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	userId, ok := r.Context().Value(middleware.UserIDKey).(uint)
 	if !ok {

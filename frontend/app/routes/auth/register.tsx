@@ -1,11 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import Button from "~/components/ui/Button";
 import { useAuth } from "~/lib/auth";
 import { api } from "~/lib/http";
 
 export default function Register() {
   const { setUser, setAccessToken } = useAuth();
+  let navigate = useNavigate();
 
   const register = useMutation({
     mutationFn: (e: React.FormEvent<HTMLFormElement>) => {
@@ -28,7 +29,7 @@ export default function Register() {
       });
       setAccessToken(data.data.access);
 
-      // TODO: redirect to logged in view...
+      navigate("/hub");
     },
   });
 
