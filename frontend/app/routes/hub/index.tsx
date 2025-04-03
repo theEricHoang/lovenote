@@ -1,9 +1,8 @@
-import { Navigate, useNavigate } from "react-router";
+import { Navigate } from "react-router";
 import { useAuth } from "~/lib/auth";
 
 export default function Hub() {
   const { user, isLoading } = useAuth();
-  let navigate = useNavigate();
 
   if (isLoading) {
     return <div className="text-black">loading...</div>;

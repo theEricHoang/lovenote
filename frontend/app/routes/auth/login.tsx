@@ -1,11 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import Button from "~/components/ui/Button";
 import { useAuth } from "~/lib/auth";
 import { api } from "~/lib/http";
 
 export default function Login() {
-  const { setUser, setAccessToken } = useAuth();
+  const { user, setUser, setAccessToken } = useAuth();
   let navigate = useNavigate();
 
   const login = useMutation({
@@ -32,7 +33,12 @@ export default function Login() {
     },
   });
 
-  
+  // automatically redirect users if they're already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/hub");
+    }
+  }, []);
 
   return (
     <div className="flex size-full min-h-min flex-col items-center justify-center overflow-y-auto p-12">

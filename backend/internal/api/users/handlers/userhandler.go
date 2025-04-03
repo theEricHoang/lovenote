@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	config "github.com/theEricHoang/lovenote/backend/internal"
@@ -167,6 +168,27 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	json.NewEncoder(w).Encode(res)
+}
+
+func (h *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	sameSiteMode := http.SameSiteStrictMode
+	if !cfg.IsProduction {
+		sameSiteMode = http.SameSiteNoneMode
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: sameSiteMode,
+		Path:     "/api/users/refresh",
+		MaxAge:   -1,              // remove immediately
+		Expires:  time.Unix(0, 0), // expire immediately
+	})
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Logged out successfully"))
 }
 
 func (h *UserHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {

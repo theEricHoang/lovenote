@@ -41,6 +41,7 @@ func RegisterRoutes(
 		r.Get("/", userHandler.SearchUsersHandler)
 		r.Post("/", userHandler.RegisterHandler)
 		r.Post("/login", userHandler.LoginHandler)
+		r.Post("/logout", userHandler.LogoutHandler)
 		r.Get("/{id}", userHandler.GetUserHandler)
 		r.Post("/refresh", userHandler.RefreshTokenHandler)
 		r.With(authMiddleware.AuthenticateMiddleware).Get("/me", userHandler.GetSelfHandler)
