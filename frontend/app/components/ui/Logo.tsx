@@ -1,8 +1,12 @@
 import { Link } from "react-router";
 
-export default function Logo() {
+export default function Logo({
+  className,
+}: {
+  className?: string;
+}) {
   return (
-    <Link to="/" className="flex items-center space-x-2">
+    <Link to="/" className={`${className} flex items-center space-x-2`}>
       <svg 
         xmlns="http://www.w3.org/2000/svg" 
         fill="red" 

@@ -9,18 +9,20 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@react-router/dev": "^7.4.1",
+    "@react-router/express": "^7.4.1",
     "@react-router/node": "^7.4.0",
-    "@react-router/serve": "^7.4.0",
+    "@react-router/serve": "^7.4.1",
     "@tanstack/react-query": "^5.71.1",
     "axios": "^1.8.4",
     "isbot": "^5.1.17",
+    "lucide-react": "^0.487.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router": "^7.4.0",
+    "react-router": "^7.4.1",
     "tailwind-merge": "^3.0.2"
   },
   "devDependencies": {
-    "@react-router/dev": "^7.4.0",
     "@tailwindcss/vite": "^4.0.0",
     "@tanstack/eslint-plugin-query": "^5.68.0",
     "@types/node": "^20",

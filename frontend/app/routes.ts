@@ -9,6 +9,8 @@ export default [
         route("/register", "routes/auth/register.tsx"),
     ]),
     ...prefix("hub", [
-        index("routes/hub/index.tsx"),
+        layout("routes/hub/_layout.tsx", [
+            index("routes/hub/index.tsx"),
+        ]),
     ]),
 ] satisfies RouteConfig;
