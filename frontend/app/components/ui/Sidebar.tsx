@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { ChevronUp, LogOut, Menu, Settings } from "lucide-react";
+import { Menu } from "lucide-react";
 import Logo from "./Logo";
-import { useAuth } from "~/lib/auth";
 
 export default function Sidebar({
   className,

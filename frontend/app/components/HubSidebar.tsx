@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "~/lib/http";
 import { useAuth } from "~/lib/auth";
 import { useState } from "react";
+import NewRelationshipDialog from "./NewRelationshipDialog";
 
 interface Relationship {
   id: number;
@@ -40,18 +41,7 @@ export default function HubSidebar() {
       <nav
         className="mt-4 p-2 space-y-1 flex-grow overflow-y-auto"
       >
-        <button
-          className="flex w-full p-2 rounded-md hover:bg-gray-50 text-black/25 font-medium items-center"
-        >
-          <CircleFadingPlus
-            size={40}
-          />
-          <span
-            className="mx-2"
-          >
-            new relationship
-          </span>
-        </button>
+        <NewRelationshipDialog />
 
         <ul className="space-y-1">
           {data?.map((relationship: Relationship) => (
