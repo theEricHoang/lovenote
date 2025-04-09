@@ -26,7 +26,10 @@ export const setUpResponseInterceptors = (setAccessToken: (token: string | null)
   api.interceptors.response.use(
     (response) => response,
     async (error) => {
-      if (error.response?.status == 401 && !isRefreshing) {
+      // Prevent infinite loop by checking if the failing request is the refresh endpoint itself
+      const isRefreshEndpoint = error.config.url === "users/refresh";
+      
+      if (error.response?.status == 401 && !isRefreshing && !isRefreshEndpoint) {
         try {
           isRefreshing = true;
           const res = await api.post("users/refresh");
