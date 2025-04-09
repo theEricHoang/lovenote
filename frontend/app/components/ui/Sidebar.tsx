@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { ChevronUp, LogOut, Menu, Settings } from "lucide-react";
 import Logo from "./Logo";
+import { useAuth } from "~/lib/auth";
 
 export default function Sidebar({
   className,
@@ -26,15 +27,12 @@ export default function Sidebar({
           id="sidebar"
           className={`${className} ${
             isOpen ? 'translate-x-0' : '-translate-x-full'
-          } fixed top-0 left-0 h-full border-r border-gray-300 bg-white w-64 transition-transform duration-300 ease-in-out z-40 shadow-xl`}
+          } fixed top-0 left-0 h-full border-r border-gray-300 bg-white w-64 transition-transform duration-300 ease-in-out z-40 shadow-xl flex flex-col`}
           aria-label="Main navigation"
       >
         <Logo className="ml-15 mt-4.75" />
-        <nav
-          className="p-4 space-y-8"
-        >
-          {children}
-        </nav>
+
+        {children}
       </aside>
     </>
   );
