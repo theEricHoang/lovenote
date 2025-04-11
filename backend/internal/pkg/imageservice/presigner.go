@@ -17,15 +17,15 @@ func NewPresigner(presignClient *s3.PresignClient) *Presigner {
 	return &Presigner{PresignClient: presignClient}
 }
 
-func (p *Presigner) PresignPut(ctx context.Context, filename string, contentType string) (string, error) {
+func (p *Presigner) PresignPut(ctx context.Context, key, contentType string) (string, error) {
 	req, err := p.PresignClient.PresignPutObject(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String("lovenote-images"),
-		Key:         aws.String(filename),
+		Key:         aws.String(key),
 		ContentType: aws.String(contentType),
 	}, s3.WithPresignExpires(15*time.Minute))
 
 	if err != nil {
-		log.Printf("Error presigning PUT url for %v: %v", filename, err)
+		log.Printf("Error presigning PUT url for %v: %v", key, err)
 		return "", err
 	}
 

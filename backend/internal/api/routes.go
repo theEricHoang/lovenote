@@ -2,11 +2,13 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/google/uuid"
 	"github.com/theEricHoang/lovenote/backend/internal/api/middleware"
 	notehandlers "github.com/theEricHoang/lovenote/backend/internal/api/notes/handlers"
 	"github.com/theEricHoang/lovenote/backend/internal/api/users/handlers"
@@ -35,29 +37,6 @@ func RegisterRoutes(
 		MaxAge:           300,  // Cache CORS response for 5 minutes
 	}))
 
-	r.With(authMiddleware.AuthenticateMiddleware).Post("/api/presign-put", func(w http.ResponseWriter, r *http.Request) {
-		var req struct {
-			Filename    string `json:"filename"`
-			ContentType string `json:"content_type"`
-		}
-
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil || req.Filename == "" || req.ContentType == "" {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
-			return
-		}
-
-		url, err := presigner.PresignPut(r.Context(), req.Filename, req.ContentType)
-		if err != nil {
-			http.Error(w, "Error generating presigned URL", http.StatusInternalServerError)
-			return
-		}
-
-		json.NewEncoder(w).Encode(map[string]string{
-			"url": url,
-		})
-	})
-
 	// users routes
 	r.Route("/api/users", func(r chi.Router) {
 		r.Get("/", userHandler.SearchUsersHandler)
@@ -69,6 +48,38 @@ func RegisterRoutes(
 		r.With(authMiddleware.AuthenticateMiddleware).Get("/me", userHandler.GetSelfHandler)
 		r.With(authMiddleware.AuthenticateMiddleware).Patch("/me", userHandler.UpdateUserHandler)
 		r.With(authMiddleware.AuthenticateMiddleware).Delete("/me", userHandler.DeleteUserHandler)
+
+		r.With(authMiddleware.AuthenticateMiddleware).Post("/presign-put", func(w http.ResponseWriter, r *http.Request) {
+			userID, ok := r.Context().Value(middleware.UserIDKey).(uint)
+			if !ok {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			var req struct {
+				Filename    string `json:"filename"`
+				ContentType string `json:"content_type"`
+			}
+
+			err := json.NewDecoder(r.Body).Decode(&req)
+			if err != nil || req.Filename == "" || req.ContentType == "" {
+				http.Error(w, "Invalid request body", http.StatusBadRequest)
+				return
+			}
+
+			key := fmt.Sprintf("uploads/%s/%d-%s", "users", userID, req.Filename)
+
+			url, err := presigner.PresignPut(r.Context(), key, req.ContentType)
+			if err != nil {
+				http.Error(w, "Error generating presigned URL", http.StatusInternalServerError)
+				return
+			}
+
+			json.NewEncoder(w).Encode(map[string]string{
+				"url": url,
+				"key": key,
+			})
+		})
 	})
 
 	r.Route("/api/relationships", func(r chi.Router) {
@@ -85,6 +96,32 @@ func RegisterRoutes(
 		r.With(authMiddleware.AuthenticateMiddleware, permissionsMiddleware.IsInRelationship, permissionsMiddleware.IsNoteOwner).Delete("/{id}/notes/{note_id}", noteHandler.DeleteNote)
 
 		r.With(authMiddleware.AuthenticateMiddleware, permissionsMiddleware.IsInRelationship).Post("/{id}/invite", inviteHandler.InviteUser)
+
+		r.With(authMiddleware.AuthenticateMiddleware).Post("/presign-put", func(w http.ResponseWriter, r *http.Request) {
+			var req struct {
+				Filename    string `json:"filename"`
+				ContentType string `json:"content_type"`
+			}
+
+			err := json.NewDecoder(r.Body).Decode(&req)
+			if err != nil || req.Filename == "" || req.ContentType == "" {
+				http.Error(w, "Invalid request body", http.StatusBadRequest)
+				return
+			}
+
+			key := fmt.Sprintf("uploads/%s/%s-%s", "relationships", uuid.New().String(), req.Filename)
+
+			url, err := presigner.PresignPut(r.Context(), key, req.ContentType)
+			if err != nil {
+				http.Error(w, "Error generating presigned URL", http.StatusInternalServerError)
+				return
+			}
+
+			json.NewEncoder(w).Encode(map[string]string{
+				"url": url,
+				"key": key,
+			})
+		})
 	})
 
 	r.Route("/api/invites", func(r chi.Router) {

@@ -38,6 +38,7 @@ export default function ImageUploader() {
       </label>
       <input
         id="picture"
+        name="picture"
         type="file"
         ref={fileInputRef}
         accept="image/*"
