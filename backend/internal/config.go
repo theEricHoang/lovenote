@@ -9,9 +9,12 @@ import (
 )
 
 type Config struct {
-	JWTSecretKey string
-	DatabaseURL  string
-	IsProduction bool
+	JWTSecretKey       string
+	DatabaseURL        string
+	IsProduction       bool
+	AWSAccessKeyID     string
+	AWSSecretAccessKey string
+	AWSRegion          string
 }
 
 func LoadConfig() Config {
@@ -21,9 +24,12 @@ func LoadConfig() Config {
 	}
 
 	config := Config{
-		JWTSecretKey: getEnv("JWT_SECRET_KEY", ""),
-		DatabaseURL:  getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/lovenote?sslmode=disable"),
-		IsProduction: getEnvAsBool("PRODUCTION", false),
+		JWTSecretKey:       getEnv("JWT_SECRET_KEY", ""),
+		DatabaseURL:        getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/lovenote?sslmode=disable"),
+		IsProduction:       getEnvAsBool("PRODUCTION", false),
+		AWSAccessKeyID:     getEnv("AWS_ACCESS_KEY_ID", ""),
+		AWSSecretAccessKey: getEnv("AWS_SECRET_ACCESS_KEY", ""),
+		AWSRegion:          getEnv("AWS_REGION", "us-east-2"),
 	}
 
 	if config.JWTSecretKey == "" {

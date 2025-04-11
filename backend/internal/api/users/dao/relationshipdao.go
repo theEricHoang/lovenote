@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/theEricHoang/lovenote/backend/internal/api/users/models"
-	db "github.com/theEricHoang/lovenote/backend/internal/pkg"
+	"github.com/theEricHoang/lovenote/backend/internal/pkg/db"
 )
 
 type RelationshipDAO struct {

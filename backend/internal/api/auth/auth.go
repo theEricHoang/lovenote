@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	config "github.com/theEricHoang/lovenote/backend/internal"
-	db "github.com/theEricHoang/lovenote/backend/internal/pkg"
+	"github.com/theEricHoang/lovenote/backend/internal/pkg/db"
 	"golang.org/x/crypto/bcrypt"
 )
 

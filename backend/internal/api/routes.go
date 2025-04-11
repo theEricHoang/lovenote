@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,6 +10,7 @@ import (
 	"github.com/theEricHoang/lovenote/backend/internal/api/middleware"
 	notehandlers "github.com/theEricHoang/lovenote/backend/internal/api/notes/handlers"
 	"github.com/theEricHoang/lovenote/backend/internal/api/users/handlers"
+	"github.com/theEricHoang/lovenote/backend/internal/pkg/imageservice"
 )
 
 // define routes here
@@ -19,6 +21,7 @@ func RegisterRoutes(
 	noteHandler *notehandlers.NoteHandler,
 	authMiddleware *middleware.AuthMiddleware,
 	permissionsMiddleware *middleware.PermissionsMiddleware,
+	presigner *imageservice.Presigner,
 ) chi.Router {
 	r := chi.NewRouter()
 	r.Use(chimiddleware.StripSlashes)
@@ -32,8 +35,27 @@ func RegisterRoutes(
 		MaxAge:           300,  // Cache CORS response for 5 minutes
 	}))
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello world"))
+	r.With(authMiddleware.AuthenticateMiddleware).Post("/api/presign-put", func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Filename    string `json:"filename"`
+			ContentType string `json:"content_type"`
+		}
+
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil || req.Filename == "" || req.ContentType == "" {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		url, err := presigner.PresignPut(r.Context(), req.Filename, req.ContentType)
+		if err != nil {
+			http.Error(w, "Error generating presigned URL", http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode(map[string]string{
+			"url": url,
+		})
 	})
 
 	// users routes
