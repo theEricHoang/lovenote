@@ -3,17 +3,19 @@ import { useRef, useState } from "react";
 import Modal from "./ui/Modal";
 import Button from "./ui/Button";
 import ImageUploader from "./ui/ImageUploader";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "~/lib/http";
 import axios from "axios";
 
 export default function NewRelationshipDialog() {
+  const queryClient = useQueryClient();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const createRelationshipMutation = useMutation({
     mutationFn: async ({ name, file }: { name: string; file: File }) => {
-      if (!file) {
+      if (!file || file.size === 0) {
         const createRes = await api.post("/relationships", {
           "name": name,
           "picture": "",
@@ -45,6 +47,10 @@ export default function NewRelationshipDialog() {
 
       return createRes.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['relationships'] })
+      closeModal();
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,8 +64,6 @@ export default function NewRelationshipDialog() {
     const file = formData.get("picture") as File;
 
     createRelationshipMutation.mutate({ name, file });
-
-    closeModal();
   }
 
   const openModal = () => setIsModalOpen(true);
@@ -115,8 +119,8 @@ export default function NewRelationshipDialog() {
               cancel
             </Button>
             <Button
-              className="inline"
               type="submit"
+              isLoading={createRelationshipMutation.isPending}
             >
               create!
             </Button>

@@ -86,7 +86,7 @@ export default function Login() {
         </div>
 
         <Button
-          className="mt-12 block w-full"
+          className="mt-12 w-full"
           size="lg"
           type="submit"
           isLoading={login.isPending}

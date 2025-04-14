@@ -50,7 +50,7 @@ export default function HubSidebar() {
                 <img
                   src={relationship.picture}
                   alt={`${relationship.name} icon`}
-                  className="w-10 h-10 rounded-full"
+                  className="w-10 h-10 rounded-full object-cover"
                 />
                 <span className="mx-2">
                   {relationship.name}

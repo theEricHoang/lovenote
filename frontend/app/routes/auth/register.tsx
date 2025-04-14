@@ -109,7 +109,7 @@ export default function Register() {
         </div>
 
         <Button
-          className="mt-12 block w-full"
+          className="mt-12 w-full"
           size="lg"
           type="submit"
           isLoading={register.isPending}
