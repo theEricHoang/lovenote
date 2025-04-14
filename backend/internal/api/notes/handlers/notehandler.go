@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -74,9 +75,10 @@ func (h *NoteHandler) CreateNote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create new note
-	note, err := h.NoteDAO.CreateNote(r.Context(), authorID, req.Title, req.Content, req.Color, req.PositionX, req.PositionY)
+	note, err := h.NoteDAO.CreateNote(r.Context(), authorID, relationshipID, req.Title, req.Content, req.Color, req.PositionX, req.PositionY)
 	if err != nil {
 		http.Error(w, "Error inserting note into database", http.StatusInternalServerError)
+		log.Printf("%v", err)
 		return
 	}
 
@@ -86,7 +88,7 @@ func (h *NoteHandler) CreateNote(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *NoteHandler) GetRelationshipNotes(w http.ResponseWriter, r *http.Request) {
-	relationshipID, ok := r.Context().Value(middleware.RelationshipIDKey).(int)
+	relationshipID, ok := r.Context().Value(middleware.RelationshipIDKey).(uint)
 	if !ok {
 		http.Error(w, "Missing relationship ID", http.StatusBadRequest)
 		return

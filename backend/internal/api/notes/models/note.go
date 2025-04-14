@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/theEricHoang/lovenote/backend/internal/api/users/models"
 )
@@ -14,7 +15,7 @@ type Note struct {
 	PositionX float32      `json:"position_x"`
 	PositionY float32      `json:"position_y"`
 	Color     string       `json:"color"`
-	CreatedAt string       `json:"created_at"`
+	CreatedAt *time.Time   `json:"created_at"`
 }
 
 func (n *Note) ToJSON(view string) ([]byte, error) {

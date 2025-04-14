@@ -11,6 +11,7 @@ export default [
     ...prefix("hub", [
         layout("routes/hub/_layout.tsx", [
             index("routes/hub/index.tsx"),
+            route("relationships/:relationshipId", "routes/hub/relationship.tsx"),
         ]),
     ]),
 ] satisfies RouteConfig;

@@ -19,7 +19,7 @@ func NewNoteDAO(database *db.Database) *NoteDAO {
 	return &NoteDAO{DB: database}
 }
 
-func (dao *NoteDAO) CreateNote(ctx context.Context, authorID uint, title, content, color string, x, y float32) (*models.Note, error) {
+func (dao *NoteDAO) CreateNote(ctx context.Context, authorID, relationshipID uint, title, content, color string, x, y float32) (*models.Note, error) {
 	tx, err := dao.DB.Pool.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -30,8 +30,8 @@ func (dao *NoteDAO) CreateNote(ctx context.Context, authorID uint, title, conten
 	note.Author = &usermodels.User{}
 	query := `
 		WITH inserted_note AS (
-			INSERT INTO notes (author_id, title, content, position_x, position_y, color)
-			VALUES ($1, $2, $3, $4, $5, $6)
+			INSERT INTO notes (author_id, title, content, position_x, position_y, color, relationship_id)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
 			RETURNING *
 		)
 		SELECT
@@ -49,7 +49,7 @@ func (dao *NoteDAO) CreateNote(ctx context.Context, authorID uint, title, conten
 		JOIN users a ON n.author_id = a.id
 	`
 
-	row := tx.QueryRow(ctx, query, authorID, title, content, x, y, color)
+	row := tx.QueryRow(ctx, query, authorID, title, content, x, y, color, relationshipID)
 	err = row.Scan(
 		&note.Id,
 		&note.Author.Id,
@@ -113,7 +113,7 @@ func (dao *NoteDAO) GetNoteByID(ctx context.Context, noteID int) (*models.Note, 
 	return &note, nil
 }
 
-func (dao *NoteDAO) GetNotesByRelationshipAndMonth(ctx context.Context, relationshipID, month, year int) ([]models.Note, error) {
+func (dao *NoteDAO) GetNotesByRelationshipAndMonth(ctx context.Context, relationshipID uint, month, year int) ([]models.Note, error) {
 	query := `
 		SELECT
 			n.id,

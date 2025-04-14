@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { api, setUpRequestInterceptors, setUpResponseInterceptors } from "./http";
 
-interface User {
+export interface User {
   id: number;
   username: string;
   email?: string;

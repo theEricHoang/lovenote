@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router";
 import Sidebar from "./ui/Sidebar";
-import { ChevronUp, CircleFadingPlus, LogOut, Settings } from "lucide-react";
+import { ChevronUp, LogOut, Settings } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "~/lib/http";
 import { useAuth } from "~/lib/auth";
@@ -46,7 +46,7 @@ export default function HubSidebar() {
         <ul className="space-y-1">
           {data?.map((relationship: Relationship) => (
             <li key={relationship.id}>
-              <NavLink className="flex p-2 rounded-md hover:bg-gray-50 text-black font-semibold items-center" to="/">
+              <NavLink className="flex p-2 rounded-md hover:bg-gray-50 text-black font-semibold items-center" to={`/hub/relationships/${relationship.id}`}>
                 <img
                   src={relationship.picture}
                   alt={`${relationship.name} icon`}
