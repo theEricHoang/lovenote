@@ -24,7 +24,7 @@ export default function Login() {
       setUser({
         id: data.data.id,
         username: data.data.username,
-        profilePicture: data.data.profile_picture,
+        profile_picture: data.data.profile_picture,
         createdAt: data.data.created_at,
       });
       setAccessToken(data.data.access);

@@ -5,7 +5,7 @@ export interface User {
   id: number;
   username: string;
   email?: string;
-  profilePicture: string;
+  profile_picture: string;
   bio?: string;
   createdAt?: string;
 }
@@ -49,7 +49,7 @@ export function AuthProvider({
           id: userResponse.data.id,
           username: userResponse.data.username,
           email: userResponse.data.email,
-          profilePicture: userResponse.data.profile_picture,
+          profile_picture: userResponse.data.profile_picture,
           bio: userResponse.data.bio,
         });
       } catch (error) {

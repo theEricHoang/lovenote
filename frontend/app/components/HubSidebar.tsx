@@ -69,7 +69,7 @@ export default function HubSidebar() {
           onClick={() => { setIsUserMenuOpen(!isUserMenuOpen) }}
         >
           <img
-            src={user?.profilePicture}
+            src={user?.profile_picture}
             alt="Current user profile picture"
             className="w-10 h-10 rounded-full"
           />
